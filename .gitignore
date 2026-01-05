@@ -1,0 +1,68 @@
+## Visual Studio
+[Bb]in/
+[Oo]bj/
+[Tt]estResult.xml
+*.user
+*.userosscache
+*.sln.docstates
+.vs/
+
+## Rider
+.idea/
+
+## VS Code
+.vscode/
+
+## User-specific files
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+## Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Aa]rm/
+[Aa]rm64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+## NuGet Packages
+*.nupkg
+# The packages folder can be ignored because of PackageReference usage
+**/packages/*
+# except build/, which is used as an MSBuild target.
+!**/packages/build/
+# Uncomment if using NuGet Code Analysis.
+# **/packages/Microsoft.CodeAnalysis.Analyzers.*
+
+## Microsoft Azure Web App publish settings.
+*.PublishSettings
+
+## Others
+.env
+.env.*
+!.env.example
+*.log
+*.bak
+*.tmp
+*.temp
+Thumbs.db
+.DS_Store
+
+## Entity Framework
+# Optional: if you don't want to track Migrations (usually it's better to track them)
+# **/Migrations/
+
+## AppSettings
+# It's usually safe to track appsettings.json, but sensitive data should be in secrets or environment variables.
+# You might want to ignore environment-specific appsettings if they contain secrets.
+# GhostSend.Api/appsettings.Development.json
+# GhostSend.Api/appsettings.Production.json
