@@ -21,7 +21,7 @@ public class StoredFile
     // constructor for Entity Framework
     private StoredFile() { }
 
-    public StoredFile(string fileName, string contentType, long size, DateTime uploadDate, int? maxDownloads, TimeSpan? lifeTime)
+    public StoredFile(string fileName, string contentType, long size, int? maxDownloads, TimeSpan? lifeTime)
     {
         Id = Guid.NewGuid();
         DeleteToken = Guid.NewGuid().ToString("N");
@@ -29,7 +29,7 @@ public class StoredFile
         FileName = fileName;
         ContentType = contentType;
         Size = size;
-        UploadDate = uploadDate;
+        UploadDate = DateTime.UtcNow;
 
         CurrentDownloads = 0;
 

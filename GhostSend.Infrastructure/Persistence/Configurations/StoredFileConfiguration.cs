@@ -1,4 +1,4 @@
-namespace GhostSend.Infrastructure.Persistence.Configuraciones;
+namespace GhostSend.Infrastructure.Persistence.Configurations;
 
 using GhostSend.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
