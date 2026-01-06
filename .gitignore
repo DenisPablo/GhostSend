@@ -62,7 +62,7 @@ Thumbs.db
 # **/Migrations/
 
 ## AppSettings
-# It's usually safe to track appsettings.json, but sensitive data should be in secrets or environment variables.
-# You might want to ignore environment-specific appsettings if they contain secrets.
-# GhostSend.Api/appsettings.Development.json
-# GhostSend.Api/appsettings.Production.json
+# Ignored to prevent sensitive data (like connection strings) from being committed
+**/appsettings.json
+**/appsettings.*.json
+!**/appsettings.Example.json

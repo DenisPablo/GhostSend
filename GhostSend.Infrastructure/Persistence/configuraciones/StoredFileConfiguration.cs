@@ -12,16 +12,16 @@ public class StoredFileConfiguration : IEntityTypeConfiguration<StoredFile>
 
         builder.HasKey(x => x.Id);
 
-        builder.Property(x => x.NombreArchivo)
+        builder.Property(x => x.FileName)
             .IsRequired()
             .HasMaxLength(500);
 
-        builder.Property(x => x.RutaAlmacenamiento)
+        builder.Property(x => x.StoragePath)
             .IsRequired();
 
         builder.Property(x => x.DeleteToken)
             .IsRequired();
 
-        builder.HasIndex(x => x.FechaExpiracion);
+        builder.HasIndex(x => x.ExpirationDate);
     }
 }

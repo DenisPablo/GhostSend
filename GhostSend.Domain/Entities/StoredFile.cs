@@ -5,62 +5,62 @@ namespace GhostSend.Domain.Entities;
 public class StoredFile
 {
     public Guid Id { get; private set; }
-    public string NombreArchivo { get; private set; } = string.Empty;
+    public string FileName { get; private set; } = string.Empty;
     public string ContentType { get; private set; } = string.Empty;
 
-    public long Tamaño { get; private set; }
-    public string RutaAlmacenamiento { get; private set; } = string.Empty;
+    public long Size { get; private set; }
+    public string StoragePath { get; private set; } = string.Empty;
     public string DeleteToken { get; private set; } = string.Empty;
 
-    public DateTime FechaSubida { get; private set; }
-    public DateTime? FechaExpiracion { get; private set; }
-    public int? MaxDescargas { get; private set; }
+    public DateTime UploadDate { get; private set; }
+    public DateTime? ExpirationDate { get; private set; }
+    public int? MaxDownloads { get; private set; }
 
-    public int DescargasActuales { get; private set; }
+    public int CurrentDownloads { get; private set; }
 
-    // constructor privado para Entity Framework
+    // constructor for Entity Framework
     private StoredFile() { }
 
-    public StoredFile(string nombreArchivo, string contentType, long tamaño, DateTime fechaSubida, int? maxDescargas, TimeSpan? lifeTime)
+    public StoredFile(string fileName, string contentType, long size, DateTime uploadDate, int? maxDownloads, TimeSpan? lifeTime)
     {
         Id = Guid.NewGuid();
         DeleteToken = Guid.NewGuid().ToString("N");
 
-        NombreArchivo = nombreArchivo;
+        FileName = fileName;
         ContentType = contentType;
-        Tamaño = tamaño;
-        FechaSubida = fechaSubida;
+        Size = size;
+        UploadDate = uploadDate;
 
-        DescargasActuales = 0;
+        CurrentDownloads = 0;
 
-        MaxDescargas = maxDescargas;
+        MaxDownloads = maxDownloads;
 
         if (lifeTime.HasValue)
         {
-            FechaExpiracion = DateTime.UtcNow.Add(lifeTime.Value);
+            ExpirationDate = DateTime.UtcNow.Add(lifeTime.Value);
         }
     }
 
-    public void SetRutaAlmacenamiento(string rutaAlmacenamiento)
+    public void SetStoragePath(string storagePath)
     {
-        if (string.IsNullOrWhiteSpace(rutaAlmacenamiento))
+        if (string.IsNullOrWhiteSpace(storagePath))
         {
-            throw new ArgumentException("La ruta de almacenamiento no puede ser nula o vacía.");
+            throw new ArgumentException("The storage path cannot be null or empty.");
         }
 
-        RutaAlmacenamiento = rutaAlmacenamiento;
+        StoragePath = storagePath;
     }
 
-    public void IncrementarDescargas()
+    public void IncrementDownloads()
     {
-        DescargasActuales++;
+        CurrentDownloads++;
     }
 
-    public bool Expirado()
+    public bool IsExpired()
     {
-        var tiempoDeExpiracion = FechaExpiracion.HasValue && DateTime.UtcNow > FechaExpiracion.Value;
-        var descargasAgotadas = MaxDescargas.HasValue && DescargasActuales >= MaxDescargas.Value;
+        var expirationTimeReached = ExpirationDate.HasValue && DateTime.UtcNow > ExpirationDate.Value;
+        var downloadsExhausted = MaxDownloads.HasValue && CurrentDownloads >= MaxDownloads.Value;
 
-        return tiempoDeExpiracion || descargasAgotadas;
+        return expirationTimeReached || downloadsExhausted;
     }
 }
