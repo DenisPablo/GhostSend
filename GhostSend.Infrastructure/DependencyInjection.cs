@@ -17,6 +17,7 @@ public static class DependencyInjection
         services.AddScoped<IFileRepository, EfFileRepository>();
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<ApplicationDbContext>());
 
+        services.AddScoped<IStorageService, LocalStorageService>();
         return services;
     }
 }

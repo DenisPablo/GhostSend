@@ -1,16 +1,15 @@
-using GhostSend.Domain.Entities;
 using GhostSend.Domain.Interfaces;
 using Microsoft.Extensions.Configuration;
 
 namespace GhostSend.Infrastructure.Persistence.Repositories;
 
-public class LocalStorageService : ILocalStorageService
+public class LocalStorageService : IStorageService
 {
     private readonly string _basePath;
 
-    public LocalStorageService(IConfiguration _configurations)
+    public LocalStorageService(IConfiguration configuration)
     {
-        _basePath = _configurations["LocalStorage:BasePath"] ?? "uploads";
+        _basePath = configuration["LocalStorage:BasePath"] ?? "uploads";
 
         if (!Directory.Exists(_basePath))
         {
@@ -18,26 +17,50 @@ public class LocalStorageService : ILocalStorageService
         }
     }
 
-    public async Task<string> SaveFileAsync(Stream stream, string fileName, CancellationToken cancellationToken)
+    public async Task<string> SaveAsync(Stream stream, Guid id, CancellationToken cancellationToken)
     {
-        var now = DateTime.UtcNow;
-        var relativePath = $"{now:yyyy-MM-dd_HH-mm-ss}_{fileName}";
+        var folderName = DateTime.UtcNow.ToString("yyyy-MM-dd");
+        var folderPath = Path.Combine(_basePath, folderName);
 
-        var filePath = Path.Combine(_basePath, relativePath);
-
-        if (!Directory.Exists(filePath))
+        if (!Directory.Exists(folderPath))
         {
-            Directory.CreateDirectory(filePath);
+            Directory.CreateDirectory(folderPath);
         }
 
-        var fileId = Guid.NewGuid();
-        var physicalName = $"{fileId}{Path.GetExtension(fileName)}";
-        var fullPath = Path.Combine(filePath, physicalName);
-        var dbPath = Path.Combine(relativePath, physicalName);
+        var fileName = id.ToString();
+        var fullPath = Path.Combine(folderPath, fileName);
 
         using var fileStream = new FileStream(fullPath, FileMode.Create, FileAccess.Write, FileShare.None, 4096, true);
         await stream.CopyToAsync(fileStream, cancellationToken);
 
-        return dbPath;
+        return Path.Combine(folderName, fileName);
+    }
+
+    public Task<Stream> GetAsync(Guid id, string storagePath, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var fullPath = Path.Combine(_basePath, storagePath);
+
+        if (!File.Exists(fullPath))
+        {
+            throw new FileNotFoundException("File not found in storage.", fullPath);
+        }
+
+        return Task.FromResult<Stream>(new FileStream(fullPath, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, true));
+    }
+
+    public Task DeleteAsync(Guid id, string storagePath, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var fullPath = Path.Combine(_basePath, storagePath);
+
+        if (File.Exists(fullPath))
+        {
+            File.Delete(fullPath);
+        }
+
+        return Task.CompletedTask;
     }
 }
