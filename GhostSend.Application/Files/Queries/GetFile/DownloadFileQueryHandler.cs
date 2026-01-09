@@ -15,19 +15,19 @@ public class DownloadFileQueryHandler(IFileRepository fileRepository, IStorageSe
         //Buscamos metadatos para saber la ruta fisica del archivo
         var file = await _fileRepository.GetByIdAsync(request.FileId, cancellationToken);
 
-        if (file == null)
+        if (file is not null)
         {
-            throw new KeyNotFoundException($"File with id {request.FileId} not found");
+            file.IncrementDownloads();
+
+            await _fileRepository.UpdateAsync(file, cancellationToken);
+
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            var stream = await _storageService.GetAsync(file.Id, file.StoragePath, cancellationToken);
+
+            return new FileDownloadResponse(stream, file.FileName, file.ContentType, file.Size);
         }
 
-        file.IncrementDownloads();
-
-        await _fileRepository.UpdateAsync(file, cancellationToken);
-
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-        var stream = await _storageService.GetAsync(file.Id, file.StoragePath, cancellationToken);
-
-        return new FileDownloadResponse(stream, file.FileName, file.ContentType, file.Size);
+        throw new KeyNotFoundException($"File with id {request.FileId} not found");
     }
 }
