@@ -4,11 +4,12 @@ using MediatR;
 
 namespace GhostSend.Application.Files.Commands.UploadFile;
 
-public class UploadFileCommandHandler(IFileRepository fileRepository, IStorageService storageService, IUnitOfWork unitOfWork) : IRequestHandler<UploadFileCommand, Guid>
+public class UploadFileCommandHandler(IFileRepository fileRepository, IStorageService storageService, IUnitOfWork unitOfWork, TimeProvider timeProvider) : IRequestHandler<UploadFileCommand, Guid>
 {
     private readonly IFileRepository _fileRepository = fileRepository;
     private readonly IStorageService _storageService = storageService;
     private readonly IUnitOfWork _unitOfWork = unitOfWork;
+    private readonly TimeProvider _timeProvider = timeProvider;
 
     public async Task<Guid> Handle(UploadFileCommand request, CancellationToken cancellationToken)
     {
@@ -17,6 +18,7 @@ public class UploadFileCommandHandler(IFileRepository fileRepository, IStorageSe
                                             request.ContentType,
                                             request.Size,
                                             request.MaxDownloads,
+                                            _timeProvider,
                                             request.LifeTime
                                         );
 

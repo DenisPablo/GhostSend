@@ -3,4 +3,5 @@
   <Project Path="GhostSend.Application/GhostSend.Application.csproj" />
   <Project Path="GhostSend.Domain/GhostSend.Domain.csproj" />
   <Project Path="GhostSend.Infrastructure/GhostSend.Infrastructure.csproj" />
+  <Project Path="GhostSend.UnitTests/GhostSend.UnitTests.csproj" />
 </Solution>

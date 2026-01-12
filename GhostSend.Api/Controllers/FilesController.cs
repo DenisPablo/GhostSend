@@ -21,7 +21,7 @@ public class FilesController(IMediator mediator) : ControllerBase
         return Ok(new { Id = result });
     }
 
-    [HttpGet("{id}")]
+    [HttpGet("GetFile/{id}")]
     public async Task<IActionResult> GetFile(Guid id, CancellationToken cancellationToken)
     {
         var query = new DownloadFileQuery(id);

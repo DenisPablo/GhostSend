@@ -1,4 +1,4 @@
-using System;
+using GhostSend.Domain.Exceptions;
 
 namespace GhostSend.Domain.Entities;
 
@@ -21,7 +21,7 @@ public class StoredFile
     // constructor for Entity Framework
     private StoredFile() { }
 
-    public StoredFile(string fileName, string contentType, long size, int? maxDownloads, TimeSpan? lifeTime)
+    public StoredFile(string fileName, string contentType, long size, int? maxDownloads, TimeProvider timeProvider, TimeSpan? lifeTime)
     {
         Id = Guid.NewGuid();
         DeleteToken = Guid.NewGuid().ToString("N");
@@ -29,7 +29,7 @@ public class StoredFile
         FileName = fileName;
         ContentType = contentType;
         Size = size;
-        UploadDate = DateTime.UtcNow;
+        UploadDate = timeProvider.GetUtcNow().UtcDateTime;
 
         CurrentDownloads = 0;
 
@@ -37,7 +37,7 @@ public class StoredFile
 
         if (lifeTime.HasValue)
         {
-            ExpirationDate = DateTime.UtcNow.Add(lifeTime.Value);
+            ExpirationDate = timeProvider.GetUtcNow().UtcDateTime.Add(lifeTime.Value);
         }
     }
 
@@ -45,7 +45,7 @@ public class StoredFile
     {
         if (string.IsNullOrWhiteSpace(storagePath))
         {
-            throw new ArgumentException("The storage path cannot be null or empty.");
+            throw new ValidationException(new Dictionary<string, string[]> { { "StoragePath", ["The storage path cannot be null or empty."] } });
         }
 
         StoragePath = storagePath;
@@ -56,9 +56,9 @@ public class StoredFile
         CurrentDownloads++;
     }
 
-    public bool IsExpired()
+    public bool IsExpired(DateTime now)
     {
-        var expirationTimeReached = ExpirationDate.HasValue && DateTime.UtcNow > ExpirationDate.Value;
+        var expirationTimeReached = ExpirationDate.HasValue && now > ExpirationDate.Value;
         var downloadsExhausted = MaxDownloads.HasValue && CurrentDownloads >= MaxDownloads.Value;
 
         return expirationTimeReached || downloadsExhausted;

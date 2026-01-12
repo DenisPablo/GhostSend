@@ -18,6 +18,9 @@ public static class DependencyInjection
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<ApplicationDbContext>());
 
         services.AddScoped<IStorageService, LocalStorageService>();
+
+        services.AddSingleton(TimeProvider.System);
+
         return services;
     }
 }
