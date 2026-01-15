@@ -1,5 +1,3 @@
-using System;
-
 namespace GhostSend.Domain.Exceptions;
 
 public abstract class DomainException : Exception

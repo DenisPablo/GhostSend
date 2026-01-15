@@ -1,3 +1,4 @@
+using GhostSend.Domain.Errors;
 using GhostSend.Domain.Exceptions;
 using GhostSend.Domain.Interfaces;
 using MediatR;
@@ -23,12 +24,12 @@ public class DownloadFileQueryHandler(IFileRepository fileRepository, IStorageSe
 
         if (file.IsExpired(_timeProvider.GetUtcNow().UtcDateTime))
         {
-            throw new ConflictException("The file has expired.");
+            throw new ConflictException(DomainErrors.Files.FileExpired);
         }
 
         if (file.CurrentDownloads >= file.MaxDownloads)
         {
-            throw new ConflictException("The maximum number of downloads has been reached.");
+            throw new ConflictException(DomainErrors.Files.MaxDownloadsReached);
         }
 
         file.IncrementDownloads();

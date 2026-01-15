@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text.Json;
+using GhostSend.Domain.Errors;
 using GhostSend.Domain.Exceptions;
 using GhostSend.Infrastructure.Persistence;
 
@@ -32,9 +33,9 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
             NotFoundException ex => (HttpStatusCode.NotFound, ex.Message),
             ValidationException ex => (HttpStatusCode.BadRequest, ex.Message),
             ConflictException ex => (HttpStatusCode.Conflict, ex.Message),
-            PersistenceException ex => (HttpStatusCode.InternalServerError, "A database error occurred."),
-            UnauthorizedAccessException ex => (HttpStatusCode.Unauthorized, "Unauthorized access."),
-            _ => (HttpStatusCode.InternalServerError, "An unexpected error occurred.")
+            PersistenceException ex => (HttpStatusCode.InternalServerError, DomainErrors.General.DatabaseError),
+            UnauthorizedAccessException ex => (HttpStatusCode.Unauthorized, DomainErrors.General.UnauthorizedAccess),
+            _ => (HttpStatusCode.InternalServerError, DomainErrors.General.UnexpectedError)
         };
 
         response.StatusCode = (int)statusCode;

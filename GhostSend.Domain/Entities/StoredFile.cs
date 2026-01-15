@@ -1,3 +1,6 @@
+using System.Collections.Generic;
+using System.Linq;
+using GhostSend.Domain.Errors;
 using GhostSend.Domain.Exceptions;
 
 namespace GhostSend.Domain.Entities;
@@ -23,16 +26,48 @@ public class StoredFile
 
     public StoredFile(string fileName, string contentType, long size, int? maxDownloads, TimeProvider timeProvider, TimeSpan? lifeTime)
     {
+        var errors = new List<string>();
+
+        if (string.IsNullOrWhiteSpace(fileName))
+        {
+            errors.Add(DomainErrors.StoredFile.FileNameRequired);
+        }
+
+        if (string.IsNullOrWhiteSpace(contentType))
+        {
+            errors.Add(DomainErrors.StoredFile.ContentTypeRequired);
+        }
+
+        if (size <= 0)
+        {
+            errors.Add(DomainErrors.StoredFile.NegativeSize);
+        }
+
+        if (maxDownloads.HasValue && maxDownloads <= 0)
+        {
+            errors.Add(DomainErrors.StoredFile.NegativeMaxDownloads);
+        }
+
+        if (lifeTime.HasValue && lifeTime <= TimeSpan.Zero)
+        {
+            errors.Add(DomainErrors.StoredFile.NegativeLifeTime);
+        }
+
+        if (errors.Count > 0)
+        {
+            throw new ValidationException(new Dictionary<string, string[]>
+            {
+                { "DomainValidation", errors.ToArray() }
+            });
+        }
+
         Id = Guid.NewGuid();
         DeleteToken = Guid.NewGuid().ToString("N");
-
+        CurrentDownloads = 0;
+        UploadDate = timeProvider.GetUtcNow().UtcDateTime;
         FileName = fileName;
         ContentType = contentType;
         Size = size;
-        UploadDate = timeProvider.GetUtcNow().UtcDateTime;
-
-        CurrentDownloads = 0;
-
         MaxDownloads = maxDownloads;
 
         if (lifeTime.HasValue)
@@ -45,7 +80,7 @@ public class StoredFile
     {
         if (string.IsNullOrWhiteSpace(storagePath))
         {
-            throw new ValidationException(new Dictionary<string, string[]> { { "StoragePath", ["The storage path cannot be null or empty."] } });
+            throw new ValidationException(new Dictionary<string, string[]> { { "StoragePath", [DomainErrors.StoredFile.StoragePathRequired] } });
         }
 
         StoragePath = storagePath;

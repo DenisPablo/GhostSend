@@ -1,3 +1,4 @@
+using GhostSend.Domain.Errors;
 using GhostSend.Domain.Interfaces;
 using Microsoft.Extensions.Configuration;
 
@@ -44,7 +45,7 @@ public class LocalStorageService : IStorageService
 
         if (!File.Exists(fullPath))
         {
-            throw new FileNotFoundException("File not found in storage.", fullPath);
+            throw new FileNotFoundException(DomainErrors.Storage.FileNotFound, fullPath);
         }
 
         return Task.FromResult<Stream>(new FileStream(fullPath, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, true));

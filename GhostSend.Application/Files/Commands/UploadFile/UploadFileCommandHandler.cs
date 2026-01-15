@@ -13,10 +13,12 @@ public class UploadFileCommandHandler(IFileRepository fileRepository, IStorageSe
 
     public async Task<Guid> Handle(UploadFileCommand request, CancellationToken cancellationToken)
     {
+        var size = request.Stream.Length;
+
         var storedFile = new StoredFile(
                                             request.FileName,
                                             request.ContentType,
-                                            request.Size,
+                                            size,
                                             request.MaxDownloads,
                                             _timeProvider,
                                             request.LifeTime
@@ -26,7 +28,7 @@ public class UploadFileCommandHandler(IFileRepository fileRepository, IStorageSe
 
         storedFile.SetStoragePath(storagePath);
 
-        await _fileRepository.UploadAsync(storedFile, cancellationToken);
+        await _fileRepository.AddAsync(storedFile, cancellationToken);
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 

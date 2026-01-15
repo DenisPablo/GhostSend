@@ -1,4 +1,5 @@
 using GhostSend.Domain.Entities;
+using GhostSend.Domain.Errors;
 using GhostSend.Domain.Interfaces;
 using GhostSend.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -8,7 +9,7 @@ namespace GhostSend.Infrastructure.Persistence.Repositories;
 public class EfFileRepository(ApplicationDbContext context) : IFileRepository
 {
 
-    public async Task UploadAsync(StoredFile file, CancellationToken cancellationToken)
+    public async Task AddAsync(StoredFile file, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(file);
 
@@ -18,7 +19,7 @@ public class EfFileRepository(ApplicationDbContext context) : IFileRepository
         }
         catch (Exception ex)
         {
-            throw new PersistenceException("An error occurred while preparing the file for upload.", ex);
+            throw new PersistenceException(DomainErrors.Persistence.FileUploadError, ex);
         }
     }
 
@@ -30,7 +31,7 @@ public class EfFileRepository(ApplicationDbContext context) : IFileRepository
         }
         catch (Exception ex)
         {
-            throw new PersistenceException($"An error occurred while retrieving the file with ID: {id}.", ex);
+            throw new PersistenceException($"{DomainErrors.Persistence.FileRetrieveError} ID: {id}", ex);
         }
     }
 
@@ -45,7 +46,7 @@ public class EfFileRepository(ApplicationDbContext context) : IFileRepository
         }
         catch (Exception ex)
         {
-            throw new PersistenceException("An error occurred while updating the file metadata.", ex);
+            throw new PersistenceException(DomainErrors.Persistence.FileUpdateError, ex);
         }
     }
 
@@ -60,7 +61,7 @@ public class EfFileRepository(ApplicationDbContext context) : IFileRepository
         }
         catch (Exception ex)
         {
-            throw new PersistenceException("An error occurred while marking the file for deletion.", ex);
+            throw new PersistenceException(DomainErrors.Persistence.FileDeleteError, ex);
         }
     }
 
@@ -74,7 +75,7 @@ public class EfFileRepository(ApplicationDbContext context) : IFileRepository
         }
         catch (Exception ex)
         {
-            throw new PersistenceException("An error occurred while retrieving expired files.", ex);
+            throw new PersistenceException(DomainErrors.Persistence.ExpiredFilesRetrieveError, ex);
         }
     }
 }
