@@ -2,6 +2,9 @@ using GhostSend.Domain.Exceptions;
 
 namespace GhostSend.Infrastructure.Common.Exceptions;
 
+/// <summary>
+/// Exception representing a failure within the Infrastructure layer (e.g., database or external services).
+/// </summary>
 public class InfrastructureLayerException : BaseException
 {
     public override string Layer => "Infrastructure";

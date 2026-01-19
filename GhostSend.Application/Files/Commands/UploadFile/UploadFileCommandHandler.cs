@@ -8,6 +8,9 @@ using MediatR;
 
 namespace GhostSend.Application.Files.Commands.UploadFile;
 
+/// <summary>
+/// Handles the upload process of a file, including validation, storage, and persistence.
+/// </summary>
 public class UploadFileCommandHandler(IFileRepository fileRepository, IStorageService storageService, IUnitOfWork unitOfWork, TimeProvider timeProvider) : IRequestHandler<UploadFileCommand, Guid>
 {
     private readonly IFileRepository _fileRepository = fileRepository;
@@ -15,6 +18,9 @@ public class UploadFileCommandHandler(IFileRepository fileRepository, IStorageSe
     private readonly IUnitOfWork _unitOfWork = unitOfWork;
     private readonly TimeProvider _timeProvider = timeProvider;
 
+    /// <summary>
+    /// Validates the request, saves the file to storage, and persists metadata to the database.
+    /// </summary>
     public async Task<Guid> Handle(UploadFileCommand request, CancellationToken cancellationToken)
     {
         if (request.Stream == null)

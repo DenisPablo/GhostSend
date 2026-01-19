@@ -1,9 +1,3 @@
-// TODO: Testear que se devuelva correctamente el archivo antes de expirar [X]
-// TODO: Testear que se devuelva correctamente el archivo antes de descargarse el maximo de veces [X]
-
-// TODO: Testear que el archivo se inaccesible una vez expirado el tiempo
-// TODO: Testear que el archivo se inaccesible una vez descargado el maximo de veces
-
 using GhostSend.Application.Files.Queries.GetFile;
 using GhostSend.Domain.Entities;
 using GhostSend.Domain.Exceptions;

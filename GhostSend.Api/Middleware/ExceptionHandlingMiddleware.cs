@@ -6,6 +6,9 @@ using GhostSend.Infrastructure.Persistence;
 
 namespace GhostSend.Api.Middleware;
 
+/// <summary>
+/// Global exception handler that catches all unhandled exceptions and returns a consistent JSON response.
+/// </summary>
 public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<ExceptionHandlingMiddleware> logger)
 {
     private static readonly JsonSerializerOptions SerializerOptions = new()

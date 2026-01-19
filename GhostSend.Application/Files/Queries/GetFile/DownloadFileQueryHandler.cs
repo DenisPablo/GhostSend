@@ -8,6 +8,9 @@ using MediatR;
 namespace GhostSend.Application.Files.Queries.GetFile;
 
 
+/// <summary>
+/// Handles the request to download a file, verifying expiration and retrieving the stream.
+/// </summary>
 public class DownloadFileQueryHandler(IFileRepository fileRepository, IStorageService storageService, IUnitOfWork unitOfWork, TimeProvider timeProvider) : IRequestHandler<DownloadFileQuery, FileDownloadResponse>
 {
     private readonly IFileRepository _fileRepository = fileRepository;
@@ -15,6 +18,9 @@ public class DownloadFileQueryHandler(IFileRepository fileRepository, IStorageSe
     private readonly IUnitOfWork _unitOfWork = unitOfWork;
     private readonly TimeProvider _timeProvider = timeProvider;
 
+    /// <summary>
+    /// Processes the download query by checking expiration logic and fetching file content.
+    /// </summary>
     public async Task<FileDownloadResponse> Handle(DownloadFileQuery request, CancellationToken cancellationToken)
     {
         try

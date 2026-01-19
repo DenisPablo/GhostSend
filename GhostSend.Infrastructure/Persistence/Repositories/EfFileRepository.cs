@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace GhostSend.Infrastructure.Persistence.Repositories;
 
-public class EfFileRepository(ApplicationDbContext context) : IFileRepository
+public class EfFileRepository(ApplicationDbContext context, TimeProvider timeProvider) : IFileRepository
 {
 
     public async Task AddAsync(StoredFile file, CancellationToken cancellationToken)
@@ -27,7 +27,11 @@ public class EfFileRepository(ApplicationDbContext context) : IFileRepository
     {
         try
         {
-            return await context.StoredFiles.FirstOrDefaultAsync(f => f.Id == id, cancellationToken);
+            var StoredFile = await context.StoredFiles.Where(f => f.Id == id)
+                                                       .Where(f => !f.IsExpired)
+                                                       .FirstOrDefaultAsync(cancellationToken);
+
+            return StoredFile;
         }
         catch (Exception ex)
         {
@@ -69,9 +73,10 @@ public class EfFileRepository(ApplicationDbContext context) : IFileRepository
     {
         try
         {
-            return await context.StoredFiles
-                .Where(f => f.ExpirationDate != null && f.ExpirationDate < DateTime.UtcNow)
+            var StoredFiles = await context.StoredFiles
+                .Where(f => f.IsExpired == true)
                 .ToListAsync(cancellationToken);
+            return StoredFiles;
         }
         catch (Exception ex)
         {

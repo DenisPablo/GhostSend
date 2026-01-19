@@ -5,6 +5,9 @@ using GhostSend.Domain.Exceptions;
 
 namespace GhostSend.Domain.Entities;
 
+/// <summary>
+/// Represents a file stored in the system with expiration logic based on time or download count.
+/// </summary>
 public class StoredFile
 {
     public Guid Id { get; private set; }
@@ -27,6 +30,9 @@ public class StoredFile
     // constructor for Entity Framework
     private StoredFile() { }
 
+    /// <summary>
+    /// Initializes a new instance of StoredFile with validation and calculates expiration date.
+    /// </summary>
     public StoredFile(string fileName, string contentType, long size, int? maxDownloads, TimeProvider timeProvider, TimeSpan? lifeTime)
     {
         var errors = new Dictionary<string, List<string>>();
@@ -91,6 +97,9 @@ public class StoredFile
         }
     }
 
+    /// <summary>
+    /// Sets the physical storage path after the file has been successfully saved.
+    /// </summary>
     public void SetStoragePath(string storagePath)
     {
         if (string.IsNullOrWhiteSpace(storagePath))
@@ -101,15 +110,21 @@ public class StoredFile
         StoragePath = storagePath;
     }
 
+    /// <summary>
+    /// Checks if the file is expired and increments download count if valid.
+    /// </summary>
+    /// <exception cref="ValidationException">Thrown if the file has reached its limit or time expiration.</exception>
     public void Download(DateTime now)
     {
         if (ExpirationDate.HasValue && now > ExpirationDate.Value)
         {
+            IsExpired = true;
             throw new ValidationException(new Dictionary<string, string[]> { { "File", [DomainErrors.StoredFile.FileExpired] } });
         }
 
         if (MaxDownloads.HasValue && CurrentDownloads >= MaxDownloads.Value)
         {
+            IsExpired = true;
             throw new ValidationException(new Dictionary<string, string[]> { { "File", [DomainErrors.StoredFile.FileExpired] } });
         }
 

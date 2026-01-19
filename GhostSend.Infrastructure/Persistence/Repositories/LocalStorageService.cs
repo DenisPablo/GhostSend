@@ -4,6 +4,9 @@ using Microsoft.Extensions.Configuration;
 
 namespace GhostSend.Infrastructure.Persistence.Repositories;
 
+/// <summary>
+/// Handles physical file storage on the local file system, organized by subfolders named after the current date.
+/// </summary>
 public class LocalStorageService : IStorageService
 {
     private readonly string _basePath;
