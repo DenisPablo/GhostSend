@@ -1,5 +1,5 @@
-using GhostSend.Domain.Errors;
 using GhostSend.Domain.Interfaces;
+using GhostSend.Infrastructure.Common.Errors;
 using Microsoft.Extensions.Configuration;
 
 namespace GhostSend.Infrastructure.Persistence.Repositories;
@@ -45,7 +45,7 @@ public class LocalStorageService : IStorageService
 
         if (!File.Exists(fullPath))
         {
-            throw new FileNotFoundException(DomainErrors.Storage.FileNotFound, fullPath);
+            throw new FileNotFoundException(InfrastructureErrors.Storage.FileNotFound, fullPath);
         }
 
         return Task.FromResult<Stream>(new FileStream(fullPath, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, true));

@@ -1,8 +1,8 @@
-using System;
+using GhostSend.Infrastructure.Common.Exceptions;
 
 namespace GhostSend.Infrastructure.Persistence;
 
-public class PersistenceException : Exception
+public class PersistenceException : InfrastructureLayerException
 {
     public PersistenceException(string message) : base(message)
     {

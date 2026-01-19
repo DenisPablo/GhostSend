@@ -1,3 +1,5 @@
+using GhostSend.Application.Common.Errors;
+using GhostSend.Application.Common.Exceptions;
 using GhostSend.Domain.Entities;
 using GhostSend.Domain.Errors;
 using GhostSend.Domain.Exceptions;
@@ -19,26 +21,37 @@ public class UploadFileCommandHandler(IFileRepository fileRepository, IStorageSe
         {
             throw new ValidationException(new Dictionary<string, string[]> { { "File", [DomainErrors.StoredFile.FileRequired] } });
         }
+        try
+        {
 
-        var size = request.Stream.Length;
+            var size = request.Stream.Length;
 
-        var storedFile = new StoredFile(
-                                            request.FileName,
-                                            request.ContentType,
-                                            size,
-                                            request.MaxDownloads,
-                                            _timeProvider,
-                                            request.LifeTime
-                                        );
+            var storedFile = new StoredFile(
+                                                request.FileName,
+                                                request.ContentType,
+                                                size,
+                                                request.MaxDownloads,
+                                                _timeProvider,
+                                                request.LifeTime
+                                            );
 
-        var storagePath = await _storageService.SaveAsync(request.Stream, storedFile.Id, cancellationToken);
+            var storagePath = await _storageService.SaveAsync(request.Stream, storedFile.Id, cancellationToken);
 
-        storedFile.SetStoragePath(storagePath);
+            storedFile.SetStoragePath(storagePath);
 
-        await _fileRepository.AddAsync(storedFile, cancellationToken);
+            await _fileRepository.AddAsync(storedFile, cancellationToken);
 
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return storedFile.Id;
+            return storedFile.Id;
+        }
+        catch (BaseException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            throw new ApplicationLayerException(ApplicationErrors.Files.UploadError, ex);
+        }
     }
 }

@@ -1,3 +1,5 @@
+using GhostSend.Application.Common.Errors;
+using GhostSend.Application.Common.Exceptions;
 using GhostSend.Domain.Errors;
 using GhostSend.Domain.Exceptions;
 using GhostSend.Domain.Interfaces;
@@ -15,31 +17,27 @@ public class DownloadFileQueryHandler(IFileRepository fileRepository, IStorageSe
 
     public async Task<FileDownloadResponse> Handle(DownloadFileQuery request, CancellationToken cancellationToken)
     {
-        var file = await _fileRepository.GetByIdAsync(request.FileId, cancellationToken);
-
-        if (file == null)
+        try
         {
-            throw new NotFoundException("File", request.FileId);
-        }
+            var file = await _fileRepository.GetByIdAsync(request.FileId, cancellationToken) ??
+                throw new NotFoundException("File", request.FileId);
 
-        if (file.IsExpired(_timeProvider.GetUtcNow().UtcDateTime))
+            file.Download(_timeProvider.GetUtcNow().UtcDateTime);
+
+            await _fileRepository.UpdateAsync(file, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            var stream = await _storageService.GetAsync(file.Id, file.StoragePath, cancellationToken);
+
+            return new FileDownloadResponse(stream, file.FileName, file.ContentType, file.Size);
+        }
+        catch (BaseException)
         {
-            throw new ConflictException(DomainErrors.Files.FileExpired);
+            throw;
         }
-
-        if (file.CurrentDownloads >= file.MaxDownloads)
+        catch (Exception ex)
         {
-            throw new ConflictException(DomainErrors.Files.MaxDownloadsReached);
+            throw new ApplicationLayerException(ApplicationErrors.Files.DownloadError, ex);
         }
-
-        file.IncrementDownloads();
-
-        await _fileRepository.UpdateAsync(file, cancellationToken);
-
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-        var stream = await _storageService.GetAsync(file.Id, file.StoragePath, cancellationToken);
-
-        return new FileDownloadResponse(stream, file.FileName, file.ContentType, file.Size);
     }
 }

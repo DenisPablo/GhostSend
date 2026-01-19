@@ -20,6 +20,7 @@ public class StoredFile
     public int? MaxDownloads { get; private set; }
 
     public int CurrentDownloads { get; private set; }
+    public bool IsExpired { get; private set; } = false;
 
     public const long MaxSize = 1024 * 1024 * 1024;
 
@@ -32,11 +33,12 @@ public class StoredFile
 
         void AddError(string key, string message)
         {
-            if (!errors.ContainsKey(key))
+            if (!errors.TryGetValue(key, out var list))
             {
-                errors[key] = new List<string>();
+                list = [];
+                errors[key] = list;
             }
-            errors[key].Add(message);
+            list.Add(message);
         }
 
         if (string.IsNullOrWhiteSpace(fileName))
@@ -99,16 +101,18 @@ public class StoredFile
         StoragePath = storagePath;
     }
 
-    public void IncrementDownloads()
+    public void Download(DateTime now)
     {
+        if (ExpirationDate.HasValue && now > ExpirationDate.Value)
+        {
+            throw new ValidationException(new Dictionary<string, string[]> { { "File", [DomainErrors.StoredFile.FileExpired] } });
+        }
+
+        if (MaxDownloads.HasValue && CurrentDownloads >= MaxDownloads.Value)
+        {
+            throw new ValidationException(new Dictionary<string, string[]> { { "File", [DomainErrors.StoredFile.FileExpired] } });
+        }
+
         CurrentDownloads++;
-    }
-
-    public bool IsExpired(DateTime now)
-    {
-        var expirationTimeReached = ExpirationDate.HasValue && now > ExpirationDate.Value;
-        var downloadsExhausted = MaxDownloads.HasValue && CurrentDownloads >= MaxDownloads.Value;
-
-        return expirationTimeReached || downloadsExhausted;
     }
 }

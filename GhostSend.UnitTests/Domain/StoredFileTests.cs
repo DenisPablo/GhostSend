@@ -48,30 +48,28 @@ public class StoredFileTests
     }
 
     [Fact]
-    public void IncrementDownloads()
+    public void Download_IncrementsCurrentDownloads()
     {
         var storedFile = new StoredFile("test.txt", "text/plain", 100, 1, TimeProvider.System, TimeSpan.FromHours(1));
 
-        storedFile.IncrementDownloads();
+        storedFile.Download(TimeProvider.System.GetUtcNow().DateTime);
 
         Assert.Equal(1, storedFile.CurrentDownloads);
     }
 
-    // Tests IsExpired
     [Fact]
-    public void IsExpired_MaxDownloads()
+    public void Download_ThrowsWhenMaxDownloadsReached()
     {
         var storedFile = new StoredFile("test.txt", "text/plain", 100, 1, TimeProvider.System, TimeSpan.FromHours(1));
 
-        storedFile.IncrementDownloads();
+        storedFile.Download(TimeProvider.System.GetUtcNow().DateTime);
 
-        Assert.True(storedFile.IsExpired(TimeProvider.System.GetUtcNow().DateTime));
+        Assert.Throws<ValidationException>(() => storedFile.Download(TimeProvider.System.GetUtcNow().DateTime));
     }
 
     [Fact]
-    public void IsExpired_DateTimeExpired()
+    public void Download_ThrowsWhenDateTimeExpired()
     {
-
         var initDate = new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero);
         var fakeTime = new FakeTimeProvider(initDate);
 
@@ -80,26 +78,17 @@ public class StoredFileTests
         fakeTime.Advance(TimeSpan.FromHours(2));
 
         var simulateTime = fakeTime.GetUtcNow().DateTime;
-        var result = storedFile.IsExpired(simulateTime);
 
-        Assert.True(result);
+        Assert.Throws<ValidationException>(() => storedFile.Download(simulateTime));
     }
 
     [Fact]
-    public void NoIsExpired()
-    {
-        var storedFile = new StoredFile("test.txt", "text/plain", 100, 1, TimeProvider.System, TimeSpan.FromHours(1));
-
-        Assert.False(storedFile.IsExpired(TimeProvider.System.GetUtcNow().DateTime));
-    }
-
-    [Fact]
-    public void NoIsExpired_MaxDownloads()
+    public void Download_DoesNotThrow_WhenValid()
     {
         var storedFile = new StoredFile("test.txt", "text/plain", 100, 2, TimeProvider.System, TimeSpan.FromHours(1));
 
-        storedFile.IncrementDownloads();
+        storedFile.Download(TimeProvider.System.GetUtcNow().DateTime);
 
-        Assert.False(storedFile.IsExpired(TimeProvider.System.GetUtcNow().DateTime));
+        Assert.Equal(1, storedFile.CurrentDownloads);
     }
 }

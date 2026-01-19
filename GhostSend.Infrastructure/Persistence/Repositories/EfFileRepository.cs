@@ -1,6 +1,6 @@
 using GhostSend.Domain.Entities;
-using GhostSend.Domain.Errors;
 using GhostSend.Domain.Interfaces;
+using GhostSend.Infrastructure.Common.Errors;
 using GhostSend.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -19,7 +19,7 @@ public class EfFileRepository(ApplicationDbContext context) : IFileRepository
         }
         catch (Exception ex)
         {
-            throw new PersistenceException(DomainErrors.Persistence.FileUploadError, ex);
+            throw new PersistenceException(InfrastructureErrors.Persistence.FileUploadError, ex);
         }
     }
 
@@ -31,7 +31,7 @@ public class EfFileRepository(ApplicationDbContext context) : IFileRepository
         }
         catch (Exception ex)
         {
-            throw new PersistenceException($"{DomainErrors.Persistence.FileRetrieveError} ID: {id}", ex);
+            throw new PersistenceException($"{InfrastructureErrors.Persistence.FileRetrieveError} ID: {id}", ex);
         }
     }
 
@@ -46,7 +46,7 @@ public class EfFileRepository(ApplicationDbContext context) : IFileRepository
         }
         catch (Exception ex)
         {
-            throw new PersistenceException(DomainErrors.Persistence.FileUpdateError, ex);
+            throw new PersistenceException(InfrastructureErrors.Persistence.FileUpdateError, ex);
         }
     }
 
@@ -61,7 +61,7 @@ public class EfFileRepository(ApplicationDbContext context) : IFileRepository
         }
         catch (Exception ex)
         {
-            throw new PersistenceException(DomainErrors.Persistence.FileDeleteError, ex);
+            throw new PersistenceException(InfrastructureErrors.Persistence.FileDeleteError, ex);
         }
     }
 
@@ -75,7 +75,7 @@ public class EfFileRepository(ApplicationDbContext context) : IFileRepository
         }
         catch (Exception ex)
         {
-            throw new PersistenceException(DomainErrors.Persistence.ExpiredFilesRetrieveError, ex);
+            throw new PersistenceException(InfrastructureErrors.Persistence.ExpiredFilesRetrieveError, ex);
         }
     }
 }

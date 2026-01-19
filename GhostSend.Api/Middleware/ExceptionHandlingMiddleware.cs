@@ -1,6 +1,5 @@
 using System.Net;
 using System.Text.Json;
-using GhostSend.Application.Common.Exceptions;
 using GhostSend.Domain.Errors;
 using GhostSend.Domain.Exceptions;
 using GhostSend.Infrastructure.Persistence;
@@ -9,6 +8,11 @@ namespace GhostSend.Api.Middleware;
 
 public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<ExceptionHandlingMiddleware> logger)
 {
+    private static readonly JsonSerializerOptions SerializerOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+    };
+
     public async Task InvokeAsync(HttpContext context)
     {
         try
@@ -24,7 +28,11 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
     private async Task HandleExceptionAsync(HttpContext context, Exception exception)
     {
         var correlationId = Guid.NewGuid().ToString();
-        logger.LogError(exception, "Unhandled exception occurred. CorrelationId: {CorrelationId}", correlationId);
+
+        if (logger.IsEnabled(LogLevel.Error))
+        {
+            logger.LogError(exception, "Unhandled exception occurred. CorrelationId: {CorrelationId}", correlationId);
+        }
 
         var response = context.Response;
         response.ContentType = "application/json";
@@ -32,12 +40,10 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
         var (statusCode, message) = exception switch
         {
             NotFoundException ex => (HttpStatusCode.NotFound, ex.Message),
-            GhostSend.Domain.Exceptions.ValidationException ex => (HttpStatusCode.BadRequest, ex.Message),
-            GhostSend.Application.Common.Exceptions.ValidationException ex => (HttpStatusCode.BadRequest, ex.Message),
+            ValidationException ex => (HttpStatusCode.BadRequest, ex.Message),
             ConflictException ex => (HttpStatusCode.Conflict, ex.Message),
-            ForbiddenAccessException ex => (HttpStatusCode.Forbidden, ex.Message),
-            PersistenceException ex => (HttpStatusCode.InternalServerError, DomainErrors.General.DatabaseError),
-            UnauthorizedAccessException ex => (HttpStatusCode.Unauthorized, DomainErrors.General.UnauthorizedAccess),
+            PersistenceException => (HttpStatusCode.InternalServerError, DomainErrors.General.DatabaseError),
+            UnauthorizedAccessException => (HttpStatusCode.Unauthorized, DomainErrors.General.UnauthorizedAccess),
             _ => (HttpStatusCode.InternalServerError, DomainErrors.General.UnexpectedError)
         };
 
@@ -51,11 +57,13 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
             {
                 message = isDevelopment ? exception.Message : message,
                 type = exception.GetType().Name,
-                correlationId = correlationId,
+                layer = exception is BaseException baseEx ? baseEx.Layer : "Unknown",
+                correlationId,
                 errors = RetrieveErrors(exception),
+                technicalMessage = isDevelopment ? exception.InnerException?.Message ?? exception.Message : null,
                 stackTrace = isDevelopment ? exception.StackTrace : null
             }
-        }, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+        }, SerializerOptions);
 
         await response.WriteAsync(result);
     }
@@ -64,8 +72,7 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
     {
         return exception switch
         {
-            GhostSend.Domain.Exceptions.ValidationException ex => ex.Errors,
-            GhostSend.Application.Common.Exceptions.ValidationException ex => ex.Errors,
+            ValidationException ex => ex.Errors,
             _ => null
         };
     }
