@@ -10,6 +10,8 @@ public static class DomainErrors
         public const string NegativeMaxDownloads = "The max downloads must be greater than 0.";
         public const string NegativeLifeTime = "The life time must be greater than 0.";
         public const string StoragePathRequired = "The storage path cannot be null or empty.";
+        public const string FileRequired = "The file is required.";
+        public const string FileTooLarge = "The file size exceeds the maximum limit.";
     }
 
     public static class Files

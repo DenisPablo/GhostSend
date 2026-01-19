@@ -40,16 +40,11 @@ public class StoredFileTests
         new StoredFile(invalidName, invalidContentType, invalidSize, invalidMaxDownloads, fakeTime, invalidLifeTime)
     );
 
-        Assert.True(ex.Errors.ContainsKey("DomainValidation"));
-
-        var listaErrores = ex.Errors["DomainValidation"];
-
-        Assert.Equal(5, listaErrores.Length);
-        Assert.Contains(listaErrores, e => e == DomainErrors.StoredFile.FileNameRequired);
-        Assert.Contains(listaErrores, e => e == DomainErrors.StoredFile.ContentTypeRequired);
-        Assert.Contains(listaErrores, e => e == DomainErrors.StoredFile.NegativeSize);
-        Assert.Contains(listaErrores, e => e == DomainErrors.StoredFile.NegativeMaxDownloads);
-        Assert.Contains(listaErrores, e => e == DomainErrors.StoredFile.NegativeLifeTime);
+        Assert.Contains(DomainErrors.StoredFile.FileNameRequired, ex.Errors["FileName"]);
+        Assert.Contains(DomainErrors.StoredFile.ContentTypeRequired, ex.Errors["ContentType"]);
+        Assert.Contains(DomainErrors.StoredFile.NegativeSize, ex.Errors["Size"]);
+        Assert.Contains(DomainErrors.StoredFile.NegativeMaxDownloads, ex.Errors["MaxDownloads"]);
+        Assert.Contains(DomainErrors.StoredFile.NegativeLifeTime, ex.Errors["LifeTime"]);
     }
 
     [Fact]

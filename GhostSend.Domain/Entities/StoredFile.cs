@@ -21,44 +21,57 @@ public class StoredFile
 
     public int CurrentDownloads { get; private set; }
 
+    public const long MaxSize = 1024 * 1024 * 1024;
+
     // constructor for Entity Framework
     private StoredFile() { }
 
     public StoredFile(string fileName, string contentType, long size, int? maxDownloads, TimeProvider timeProvider, TimeSpan? lifeTime)
     {
-        var errors = new List<string>();
+        var errors = new Dictionary<string, List<string>>();
+
+        void AddError(string key, string message)
+        {
+            if (!errors.ContainsKey(key))
+            {
+                errors[key] = new List<string>();
+            }
+            errors[key].Add(message);
+        }
 
         if (string.IsNullOrWhiteSpace(fileName))
         {
-            errors.Add(DomainErrors.StoredFile.FileNameRequired);
+            AddError("FileName", DomainErrors.StoredFile.FileNameRequired);
         }
 
         if (string.IsNullOrWhiteSpace(contentType))
         {
-            errors.Add(DomainErrors.StoredFile.ContentTypeRequired);
+            AddError("ContentType", DomainErrors.StoredFile.ContentTypeRequired);
         }
 
         if (size <= 0)
         {
-            errors.Add(DomainErrors.StoredFile.NegativeSize);
+            AddError("Size", DomainErrors.StoredFile.NegativeSize);
         }
 
         if (maxDownloads.HasValue && maxDownloads <= 0)
         {
-            errors.Add(DomainErrors.StoredFile.NegativeMaxDownloads);
+            AddError("MaxDownloads", DomainErrors.StoredFile.NegativeMaxDownloads);
         }
 
         if (lifeTime.HasValue && lifeTime <= TimeSpan.Zero)
         {
-            errors.Add(DomainErrors.StoredFile.NegativeLifeTime);
+            AddError("LifeTime", DomainErrors.StoredFile.NegativeLifeTime);
+        }
+
+        if (size > MaxSize)
+        {
+            AddError("Size", DomainErrors.StoredFile.FileTooLarge);
         }
 
         if (errors.Count > 0)
         {
-            throw new ValidationException(new Dictionary<string, string[]>
-            {
-                { "DomainValidation", errors.ToArray() }
-            });
+            throw new ValidationException(errors.ToDictionary(k => k.Key, v => v.Value.ToArray()));
         }
 
         Id = Guid.NewGuid();

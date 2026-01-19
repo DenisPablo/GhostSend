@@ -1,4 +1,6 @@
 using GhostSend.Domain.Entities;
+using GhostSend.Domain.Errors;
+using GhostSend.Domain.Exceptions;
 using GhostSend.Domain.Interfaces;
 using MediatR;
 
@@ -13,6 +15,11 @@ public class UploadFileCommandHandler(IFileRepository fileRepository, IStorageSe
 
     public async Task<Guid> Handle(UploadFileCommand request, CancellationToken cancellationToken)
     {
+        if (request.Stream == null)
+        {
+            throw new ValidationException(new Dictionary<string, string[]> { { "File", [DomainErrors.StoredFile.FileRequired] } });
+        }
+
         var size = request.Stream.Length;
 
         var storedFile = new StoredFile(
