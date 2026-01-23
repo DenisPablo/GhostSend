@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using GhostSend.Domain.Errors;
 using GhostSend.Domain.Exceptions;
@@ -26,6 +27,9 @@ public class StoredFile
     public bool IsExpired { get; private set; } = false;
 
     public const long MaxSize = 1024 * 1024 * 1024;
+
+    [Timestamp]
+    public byte[] RowVersion { get; private set; }
 
     // constructor for Entity Framework
     private StoredFile() { }

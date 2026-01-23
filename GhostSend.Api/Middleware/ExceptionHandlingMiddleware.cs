@@ -45,6 +45,7 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
             NotFoundException ex => (HttpStatusCode.NotFound, ex.Message),
             ValidationException ex => (HttpStatusCode.BadRequest, ex.Message),
             ConflictException ex => (HttpStatusCode.Conflict, ex.Message),
+            ConcurrencyException ex => (HttpStatusCode.Conflict, ex.Message),
             PersistenceException => (HttpStatusCode.InternalServerError, DomainErrors.General.DatabaseError),
             UnauthorizedAccessException => (HttpStatusCode.Unauthorized, DomainErrors.General.UnauthorizedAccess),
             _ => (HttpStatusCode.InternalServerError, DomainErrors.General.UnexpectedError)

@@ -37,6 +37,10 @@ public class DownloadFileQueryHandler(IFileRepository fileRepository, IStorageSe
 
             return new FileDownloadResponse(stream, file.FileName, file.ContentType, file.Size);
         }
+        catch (ConcurrencyException)
+        {
+            throw new ValidationException(new Dictionary<string, string[]> { { "File", [DomainErrors.StoredFile.FileExpired] } });
+        }
         catch (BaseException)
         {
             throw;
