@@ -20,7 +20,7 @@ public class UploadFileCommandHandlerTests
         StoredFile fileSaved = null!;
 
 
-        storageMock.Setup(x => x.SaveAsync(It.IsAny<Stream>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+        storageMock.Setup(x => x.SaveAsync(It.IsAny<Stream>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync("uploads/test-path-data");
 
         repositoryMock.Setup(x => x.AddAsync(It.IsAny<StoredFile>(), It.IsAny<CancellationToken>()))
@@ -37,7 +37,7 @@ public class UploadFileCommandHandlerTests
 
         var result = await handler.Handle(command, CancellationToken.None);
 
-        storageMock.Verify(x => x.SaveAsync(It.IsAny<Stream>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Once);
+        storageMock.Verify(x => x.SaveAsync(It.IsAny<Stream>(), It.IsAny<CancellationToken>()), Times.Once);
         repositoryMock.Verify(x => x.AddAsync(It.Is<StoredFile>(
             f => f.FileName == command.FileName &&
             f.ContentType == command.ContentType &&
@@ -99,7 +99,7 @@ public class UploadFileCommandHandlerTests
 
         Assert.Contains(DomainErrors.StoredFile.FileTooLarge, exception.Errors["Size"]);
 
-        storageMock.Verify(x => x.SaveAsync(It.IsAny<Stream>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
+        storageMock.Verify(x => x.SaveAsync(It.IsAny<Stream>(), It.IsAny<CancellationToken>()), Times.Never);
 
         repositoryMock.Verify(x => x.AddAsync(It.IsAny<StoredFile>(), It.IsAny<CancellationToken>()), Times.Never);
 
@@ -115,7 +115,7 @@ public class UploadFileCommandHandlerTests
         var unitOfWorkMock = new Mock<IUnitOfWork>();
         var timeProvider = new FakeTimeProvider();
 
-        storageMock.Setup(x => x.SaveAsync(It.IsAny<Stream>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+        storageMock.Setup(x => x.SaveAsync(It.IsAny<Stream>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync("uploads/test-path-data");
 
         var borderLimitStreamMock = new Mock<Stream>();

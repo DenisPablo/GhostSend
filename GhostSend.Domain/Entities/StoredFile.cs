@@ -1,7 +1,9 @@
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using GhostSend.Domain.Errors;
 using GhostSend.Domain.Exceptions;
+using ValidationException = GhostSend.Domain.Exceptions.ValidationException;
 
 namespace GhostSend.Domain.Entities;
 
@@ -26,6 +28,9 @@ public class StoredFile
     public bool IsExpired { get; private set; } = false;
 
     public const long MaxSize = 1024 * 1024 * 1024;
+
+    [Timestamp]
+    public byte[]? RawVersion { get; private set; }
 
     // constructor for Entity Framework
     private StoredFile() { }
@@ -95,6 +100,7 @@ public class StoredFile
         {
             ExpirationDate = timeProvider.GetUtcNow().UtcDateTime.Add(lifeTime.Value);
         }
+
     }
 
     /// <summary>

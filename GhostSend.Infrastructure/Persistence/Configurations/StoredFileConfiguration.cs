@@ -23,5 +23,9 @@ public class StoredFileConfiguration : IEntityTypeConfiguration<StoredFile>
             .IsRequired();
 
         builder.HasIndex(x => x.ExpirationDate);
+
+        // RawVersion configured as RowVersion (will be mapped to xmin in PostgreSQL automatically)
+        builder.Property(x => x.RawVersion)
+            .IsRowVersion();
     }
 }

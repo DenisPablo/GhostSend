@@ -33,9 +33,13 @@ public class DownloadFileQueryHandler(IFileRepository fileRepository, IStorageSe
             await _fileRepository.UpdateAsync(file, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-            var stream = await _storageService.GetAsync(file.Id, file.StoragePath, cancellationToken);
+            var stream = await _storageService.GetAsync(file.StoragePath, cancellationToken);
 
             return new FileDownloadResponse(stream, file.FileName, file.ContentType, file.Size);
+        }
+        catch (ConcurrencyException)
+        {
+            throw new ValidationException(new Dictionary<string, string[]> { { "File", [DomainErrors.StoredFile.FileExpired] } });
         }
         catch (BaseException)
         {

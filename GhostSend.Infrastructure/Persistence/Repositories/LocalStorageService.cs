@@ -21,7 +21,7 @@ public class LocalStorageService : IStorageService
         }
     }
 
-    public async Task<string> SaveAsync(Stream stream, Guid id, CancellationToken cancellationToken)
+    public async Task<string> SaveAsync(Stream stream, CancellationToken cancellationToken)
     {
         var folderName = DateTime.UtcNow.ToString("yyyy-MM-dd");
         var folderPath = Path.Combine(_basePath, folderName);
@@ -31,7 +31,7 @@ public class LocalStorageService : IStorageService
             Directory.CreateDirectory(folderPath);
         }
 
-        var fileName = id.ToString();
+        var fileName = Guid.NewGuid().ToString();
         var fullPath = Path.Combine(folderPath, fileName);
 
         using var fileStream = new FileStream(fullPath, FileMode.Create, FileAccess.Write, FileShare.None, 4096, true);
@@ -40,7 +40,7 @@ public class LocalStorageService : IStorageService
         return Path.Combine(folderName, fileName);
     }
 
-    public Task<Stream> GetAsync(Guid id, string storagePath, CancellationToken cancellationToken)
+    public Task<Stream> GetAsync(string storagePath, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
@@ -54,7 +54,7 @@ public class LocalStorageService : IStorageService
         return Task.FromResult<Stream>(new FileStream(fullPath, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, true));
     }
 
-    public Task DeleteAsync(Guid id, string storagePath, CancellationToken cancellationToken)
+    public Task DeleteAsync(string storagePath, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 

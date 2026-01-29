@@ -41,7 +41,7 @@ public class UploadFileCommandHandler(IFileRepository fileRepository, IStorageSe
                                                 request.LifeTime
                                             );
 
-            var storagePath = await _storageService.SaveAsync(request.Stream, storedFile.Id, cancellationToken);
+            var storagePath = await _storageService.SaveAsync(request.Stream, cancellationToken);
 
             storedFile.SetStoragePath(storagePath);
 

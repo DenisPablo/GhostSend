@@ -27,8 +27,9 @@ public class EfFileRepository(ApplicationDbContext context, TimeProvider timePro
     {
         try
         {
+            var now = timeProvider.GetUtcNow().UtcDateTime;
             var StoredFile = await context.StoredFiles.Where(f => f.Id == id)
-                                                       .Where(f => !f.IsExpired)
+                                                       .Where(f => (!f.IsExpired) && (f.ExpirationDate > now || f.ExpirationDate == null))
                                                        .FirstOrDefaultAsync(cancellationToken);
 
             return StoredFile;
@@ -73,8 +74,9 @@ public class EfFileRepository(ApplicationDbContext context, TimeProvider timePro
     {
         try
         {
+            var now = timeProvider.GetUtcNow().UtcDateTime;
             var StoredFiles = await context.StoredFiles
-                .Where(f => f.IsExpired == true)
+                .Where(f => f.IsExpired == true && (f.ExpirationDate < now || f.ExpirationDate == null))
                 .ToListAsync(cancellationToken);
             return StoredFiles;
         }

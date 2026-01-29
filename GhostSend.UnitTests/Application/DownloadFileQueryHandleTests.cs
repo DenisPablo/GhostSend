@@ -32,7 +32,7 @@ public class DownloadFileQueryHandlerTests
         fileRepositoryMock.Setup(x => x.GetByIdAsync(fileId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(storedFile);
 
-        storageMock.Setup(x => x.GetAsync(storedFile.Id, It.IsAny<string>(), It.IsAny<CancellationToken>()))
+        storageMock.Setup(x => x.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(stream);
 
         var handler = new DownloadFileQueryHandler(
@@ -82,7 +82,7 @@ public class DownloadFileQueryHandlerTests
         fileRepositoryMock.Setup(x => x.GetByIdAsync(fileId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(storedFile);
 
-        storageMock.Setup(x => x.GetAsync(storedFile.Id, It.IsAny<string>(), It.IsAny<CancellationToken>()))
+        storageMock.Setup(x => x.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(stream);
 
         var handler = new DownloadFileQueryHandler(

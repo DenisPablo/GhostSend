@@ -1,5 +1,6 @@
 using GhostSend.Api.Middleware;
 using GhostSend.Infrastructure;
+using GhostSend.Infrastructure.BackgroundJobs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,8 +11,11 @@ builder.Services.AddOpenApi();
 // Infrastructure DI
 builder.Services.AddInfrastructure(builder.Configuration);
 
+
 // Application DI (MediatR)
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(GhostSend.Application.Files.Commands.UploadFile.UploadFileCommand).Assembly));
+
+builder.Services.AddHostedService<FileCleanWorker>();
 
 var app = builder.Build();
 
@@ -30,3 +34,8 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+namespace GhostSend.Api
+{
+    public partial class Program { }
+}
