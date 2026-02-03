@@ -14,6 +14,8 @@ public static class DomainErrors
         public const string FileTooLarge = "The file size exceeds the maximum limit.";
         public const string FileExpired = "The file has expired.";
         public const string MaxDownloadsReached = "The maximum number of downloads has been reached.";
+        public const string FileNotFound = "The requested file was not found.";
+        public const string InvalidDeleteToken = "The provided delete token is invalid.";
     }
 
 

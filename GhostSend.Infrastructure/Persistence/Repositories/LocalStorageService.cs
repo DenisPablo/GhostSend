@@ -7,19 +7,9 @@ namespace GhostSend.Infrastructure.Persistence.Repositories;
 /// <summary>
 /// Handles physical file storage on the local file system, organized by subfolders named after the current date.
 /// </summary>
-public class LocalStorageService : IStorageService
+public class LocalStorageService(IConfiguration configuration) : IStorageService
 {
-    private readonly string _basePath;
-
-    public LocalStorageService(IConfiguration configuration)
-    {
-        _basePath = configuration["LocalStorage:BasePath"] ?? "uploads";
-
-        if (!Directory.Exists(_basePath))
-        {
-            Directory.CreateDirectory(_basePath);
-        }
-    }
+    private readonly string _basePath = configuration["LocalStorage:BasePath"] ?? "uploads";
 
     public async Task<string> SaveAsync(Stream stream, CancellationToken cancellationToken)
     {

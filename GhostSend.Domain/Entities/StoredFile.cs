@@ -27,7 +27,7 @@ public class StoredFile
     public int CurrentDownloads { get; private set; }
     public bool IsExpired { get; private set; } = false;
 
-    public const long MaxSize = 1024 * 1024 * 1024;
+    public const long MaxSize = 10L * 1024 * 1024 * 1024;
 
     [Timestamp]
     public byte[]? RawVersion { get; private set; }

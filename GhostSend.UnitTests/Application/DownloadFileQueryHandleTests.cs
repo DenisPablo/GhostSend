@@ -1,4 +1,4 @@
-using GhostSend.Application.Files.Queries.GetFile;
+using GhostSend.Application.Files.Queries.DownloadFile;
 using GhostSend.Domain.Entities;
 using GhostSend.Domain.Exceptions;
 using GhostSend.Domain.Interfaces;

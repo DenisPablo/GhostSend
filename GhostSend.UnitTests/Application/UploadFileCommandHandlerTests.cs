@@ -46,7 +46,7 @@ public class UploadFileCommandHandlerTests
             ), It.IsAny<CancellationToken>()), Times.Once);
         unitOfWorkMock.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
 
-        Assert.Equal(fileSaved.Id, result);
+        Assert.Equal(fileSaved.Id, result.FileId);
     }
 
     [Fact]
@@ -140,7 +140,7 @@ public class UploadFileCommandHandlerTests
 
         var result = await handler.Handle(command, CancellationToken.None);
 
-        Assert.NotEqual(result, Guid.Empty);
+        Assert.NotEqual(result.FileId, Guid.Empty);
         repositoryMock.Verify(x => x.AddAsync(It.Is<StoredFile>(f => f.Size == StoredFile.MaxSize), It.IsAny<CancellationToken>()), Times.Once);
     }
 }

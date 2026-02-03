@@ -11,8 +11,7 @@ namespace GhostSend.UnitTests.Infrastructure;
 
 public class IntegrationTestWebAppFactory : WebApplicationFactory<GhostSend.Api.Program>, IAsyncLifetime
 {
-    private readonly PostgreSqlContainer _dbContainer = new PostgreSqlBuilder()
-        .WithImage("postgres:15-alpine")
+    private readonly PostgreSqlContainer _dbContainer = new PostgreSqlBuilder("postgres:15-alpine")
         .WithDatabase("ghostsend_test_db")
         .WithUsername("postgres")
         .WithPassword("postgres")

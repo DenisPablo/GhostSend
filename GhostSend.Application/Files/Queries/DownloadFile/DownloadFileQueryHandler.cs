@@ -5,19 +5,13 @@ using GhostSend.Domain.Exceptions;
 using GhostSend.Domain.Interfaces;
 using MediatR;
 
-namespace GhostSend.Application.Files.Queries.GetFile;
-
+namespace GhostSend.Application.Files.Queries.DownloadFile;
 
 /// <summary>
 /// Handles the request to download a file, verifying expiration and retrieving the stream.
 /// </summary>
 public class DownloadFileQueryHandler(IFileRepository fileRepository, IStorageService storageService, IUnitOfWork unitOfWork, TimeProvider timeProvider) : IRequestHandler<DownloadFileQuery, FileDownloadResponse>
 {
-    private readonly IFileRepository _fileRepository = fileRepository;
-    private readonly IStorageService _storageService = storageService;
-    private readonly IUnitOfWork _unitOfWork = unitOfWork;
-    private readonly TimeProvider _timeProvider = timeProvider;
-
     /// <summary>
     /// Processes the download query by checking expiration logic and fetching file content.
     /// </summary>
@@ -25,21 +19,21 @@ public class DownloadFileQueryHandler(IFileRepository fileRepository, IStorageSe
     {
         try
         {
-            var file = await _fileRepository.GetByIdAsync(request.FileId, cancellationToken) ??
+            var file = await fileRepository.GetByIdAsync(request.FileId, cancellationToken) ??
                 throw new NotFoundException("File", request.FileId);
 
-            file.Download(_timeProvider.GetUtcNow().UtcDateTime);
+            file.Download(timeProvider.GetUtcNow().UtcDateTime);
 
-            await _fileRepository.UpdateAsync(file, cancellationToken);
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            await fileRepository.UpdateAsync(file, cancellationToken);
+            await unitOfWork.SaveChangesAsync(cancellationToken);
 
-            var stream = await _storageService.GetAsync(file.StoragePath, cancellationToken);
+            var stream = await storageService.GetAsync(file.StoragePath, cancellationToken);
 
             return new FileDownloadResponse(stream, file.FileName, file.ContentType, file.Size);
         }
         catch (ConcurrencyException)
         {
-            throw new ValidationException(new Dictionary<string, string[]> { { "File", [DomainErrors.StoredFile.FileExpired] } });
+            throw new GhostSend.Domain.Exceptions.ValidationException(new Dictionary<string, string[]> { { "File", [DomainErrors.StoredFile.FileExpired] } });
         }
         catch (BaseException)
         {

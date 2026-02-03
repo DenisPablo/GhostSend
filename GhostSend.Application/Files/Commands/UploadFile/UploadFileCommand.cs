@@ -2,6 +2,12 @@ using MediatR;
 
 namespace GhostSend.Application.Files.Commands.UploadFile;
 
+public record UploadFileResponse
+{
+    public required Guid FileId { get; set; }
+    public required string DeleteToken { get; set; }
+}
+
 public record UploadFileCommand(
     Stream Stream,
     string FileName,
@@ -9,4 +15,4 @@ public record UploadFileCommand(
     long Size,
     int? MaxDownloads,
     TimeSpan? LifeTime
-) : IRequest<Guid>;
+) : IRequest<UploadFileResponse>;

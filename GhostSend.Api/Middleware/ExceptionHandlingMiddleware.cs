@@ -2,6 +2,7 @@ using System.Net;
 using System.Text.Json;
 using GhostSend.Domain.Errors;
 using GhostSend.Domain.Exceptions;
+using GhostSend.Application.Common.Exceptions;
 using GhostSend.Infrastructure.Persistence;
 
 namespace GhostSend.Api.Middleware;
@@ -77,6 +78,9 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
         return exception switch
         {
             ValidationException ex => ex.Errors,
+
+            ApplicationLayerException appEx when appEx.InnerException is ValidationException valEx => valEx.Errors,
+
             _ => null
         };
     }

@@ -11,17 +11,12 @@ namespace GhostSend.Application.Files.Commands.UploadFile;
 /// <summary>
 /// Handles the upload process of a file, including validation, storage, and persistence.
 /// </summary>
-public class UploadFileCommandHandler(IFileRepository fileRepository, IStorageService storageService, IUnitOfWork unitOfWork, TimeProvider timeProvider) : IRequestHandler<UploadFileCommand, Guid>
+public class UploadFileCommandHandler(IFileRepository fileRepository, IStorageService storageService, IUnitOfWork unitOfWork, TimeProvider timeProvider) : IRequestHandler<UploadFileCommand, UploadFileResponse>
 {
-    private readonly IFileRepository _fileRepository = fileRepository;
-    private readonly IStorageService _storageService = storageService;
-    private readonly IUnitOfWork _unitOfWork = unitOfWork;
-    private readonly TimeProvider _timeProvider = timeProvider;
-
     /// <summary>
     /// Validates the request, saves the file to storage, and persists metadata to the database.
     /// </summary>
-    public async Task<Guid> Handle(UploadFileCommand request, CancellationToken cancellationToken)
+    public async Task<UploadFileResponse> Handle(UploadFileCommand request, CancellationToken cancellationToken)
     {
         if (request.Stream == null)
         {
@@ -37,19 +32,19 @@ public class UploadFileCommandHandler(IFileRepository fileRepository, IStorageSe
                                                 request.ContentType,
                                                 size,
                                                 request.MaxDownloads,
-                                                _timeProvider,
+                                                timeProvider,
                                                 request.LifeTime
                                             );
 
-            var storagePath = await _storageService.SaveAsync(request.Stream, cancellationToken);
+            var storagePath = await storageService.SaveAsync(request.Stream, cancellationToken);
 
             storedFile.SetStoragePath(storagePath);
 
-            await _fileRepository.AddAsync(storedFile, cancellationToken);
+            await fileRepository.AddAsync(storedFile, cancellationToken);
 
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            await unitOfWork.SaveChangesAsync(cancellationToken);
 
-            return storedFile.Id;
+            return new UploadFileResponse { FileId = storedFile.Id, DeleteToken = storedFile.DeleteToken };
         }
         catch (BaseException)
         {

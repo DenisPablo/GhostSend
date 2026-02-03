@@ -1,6 +1,7 @@
 using GhostSend.Api.DTOs;
 using GhostSend.Application.Files.Commands.UploadFile;
-using GhostSend.Application.Files.Queries.GetFile;
+using GhostSend.Application.Files.Queries.DownloadFile;
+using GhostSend.Application.Files.Queries.GetFileMetadata;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -13,12 +14,13 @@ public class FilesController(IMediator mediator) : ControllerBase
 
     [HttpPost("upload")]
     [Consumes("multipart/form-data")]
+    [DisableRequestSizeLimit]
     public async Task<IActionResult> UploadFile([FromForm] UploadFileRequest request, CancellationToken cancellationToken)
     {
         var command = request.ToCommand();
         var result = await mediator.Send(command, cancellationToken);
 
-        return Ok(new { Id = result });
+        return Ok(new { result.FileId, result.DeleteToken });
     }
 
     [HttpGet("GetFile/{id}")]
