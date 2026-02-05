@@ -1,4 +1,4 @@
-using GhostSend.Application.Files.Commands.UploadFile;
+using System.Reflection.Metadata;
 using GhostSend.Application.Files.Queries.GetFileMetadata;
 using GhostSend.Domain.Entities;
 using GhostSend.Domain.Interfaces;
@@ -10,45 +10,36 @@ namespace GhostSend.UnitTests.Application;
 public class GetFileMetadataHandleTest
 {
     [Fact]
-    public async Task GetFileMetadataCorrectly()
+    public async Task Handle_ShouldReturnMetadata_WhenFileExists()
     {
-        var storedFileMock = new Mock<StoredFile>();
         var repositoryMock = new Mock<IFileRepository>();
-        var unitOfWorkMock = new Mock<IUnitOfWork>();
+
+        var fileId = Guid.NewGuid;
+
         var timeProvider = new FakeTimeProvider();
-        var storageMock = new Mock<IStorageService>();
-        StoredFile fileSaved = null!;
+        
+        var expectedMetadata = new FileMetadata
+        {
+            Id = fileId,
+            Name = "test.txt",
+            Size = 1024,
+            ContentType = "text/plain",
+            UploadDate = DateTime.UtcNow
+        };
 
-        storageMock.Setup(x => x.SaveAsync(It.IsAny<Stream>(), It.IsAny<CancellationToken>()))
-                        .ReturnsAsync("uploads/test-path-data");
+        repositoryMock.Setup(r => r.GetMetadataAsync(fileId))
+            .ReturnsAsync(expectedMetadata);
 
-        repositoryMock.Setup(x => x.AddAsync(It.IsAny<StoredFile>(), It.IsAny<CancellationToken>()))
-                .Callback<StoredFile, CancellationToken>((file, cancellationToken) =>
-                {
-                    fileSaved = file;
-                });
+        var handler = new GetFileMetadataHandler(repositoryMock.Object);
+        var query = new GetFileMetadataQuery(fileId);
 
-        var handlerUploadFile = new UploadFileCommandHandler(repositoryMock.Object, storageMock.Object, unitOfWorkMock.Object, timeProvider);
+        var result = await handler.Handle(query, CancellationToken.None);
 
-        var command = new UploadFileCommand(
-            new MemoryStream([1, 2, 3]), "test.txt", "text/plain", 1, 1, TimeSpan.FromDays(1)
-        );
-
-        var resultUploadFile = await handlerUploadFile.Handle(command, CancellationToken.None);
-
-        StoredFile? storedFile = await repositoryMock.Object.GetByIdAsync(resultUploadFile.FileId, CancellationToken.None);
-
-        var handlerGetFileMetadata = new GetFileMetadataQueryHandler(repositoryMock.Object);
-
-        var query = new GetFileMetadataQuery(storedFile!.Id);
-
-        var resultGetFileMetadata = await handlerGetFileMetadata.Handle(query, CancellationToken.None);
-
-        Assert.Equal(storedFile.Id, resultGetFileMetadata.Id);
-        Assert.Equal(storedFile.FileName, resultGetFileMetadata.FileName);
-        Assert.Equal(storedFile.ContentType, resultGetFileMetadata.ContentType);
-        Assert.Equal(storedFile.Size, resultGetFileMetadata.Size);
-        Assert.Equal(storedFile.MaxDownloads, resultGetFileMetadata.MaxDownloads);
-        Assert.Equal(storedFile.ExpirationDate, resultGetFileMetadata.ExpirationDate);
+        Assert.NotNull(result);
+        Assert.Equal(expectedMetadata.Id, result.Id);
+        Assert.Equal(expectedMetadata.Name, result.Name);
+        Assert.Equal(expectedMetadata.Size, result.Size);
+        Assert.Equal(expectedMetadata.ContentType, result.ContentType);
+        Assert.Equal(expectedMetadata.UploadDate, result.UploadDate);
     }
 }

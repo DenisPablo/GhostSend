@@ -17,8 +17,9 @@ public class GetFileMetadataQueryHandler(IFileRepository fileRepository) : IRequ
             file.ContentType,
             file.Size,
             file.MaxDownloads,
+            file.UploadDate,
             file.CurrentDownloads,
-            file.ExpirationDate ?? DateTime.MaxValue
+            file.ExpirationDate
         );
     }
 }

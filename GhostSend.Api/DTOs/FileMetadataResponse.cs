@@ -1,12 +1,11 @@
 namespace GhostSend.Api.DTOs;
 
-public record FileMetadata(
+public record FileMetadataResponse(
   Guid Id,
   string FileName,
   string ContentType,
-  int Downloads,
+  int CurrentDownloads,
   DateTime UploadDate,
-  DateTime CurrentDate,
   DateTime? ExpirationDate,
   int? MaxDownloads
 );

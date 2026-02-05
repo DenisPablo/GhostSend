@@ -6,10 +6,11 @@ public record GetFileMetadataQuery(Guid FileId) : IRequest<GetFileMetadataDto>;
 
 public record GetFileMetadataDto(
     Guid Id,
-    string Name,
+    string FileName,
     string ContentType,
     long Size,
     int? MaxDownloads,
+    DateTime UploadDate,
     int CurrentDownloads,
-    DateTime ExpirationDate
+    DateTime? ExpirationDate
 );

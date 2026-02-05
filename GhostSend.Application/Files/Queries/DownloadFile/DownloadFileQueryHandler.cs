@@ -10,12 +10,12 @@ namespace GhostSend.Application.Files.Queries.DownloadFile;
 /// <summary>
 /// Handles the request to download a file, verifying expiration and retrieving the stream.
 /// </summary>
-public class DownloadFileQueryHandler(IFileRepository fileRepository, IStorageService storageService, IUnitOfWork unitOfWork, TimeProvider timeProvider) : IRequestHandler<DownloadFileQuery, FileDownloadResponse>
+public class DownloadFileQueryHandler(IFileRepository fileRepository, IStorageService storageService, IUnitOfWork unitOfWork, TimeProvider timeProvider) : IRequestHandler<DownloadFileQuery, DownloadFileQueryResult>
 {
     /// <summary>
     /// Processes the download query by checking expiration logic and fetching file content.
     /// </summary>
-    public async Task<FileDownloadResponse> Handle(DownloadFileQuery request, CancellationToken cancellationToken)
+    public async Task<DownloadFileQueryResult> Handle(DownloadFileQuery request, CancellationToken cancellationToken)
     {
         try
         {
@@ -29,7 +29,7 @@ public class DownloadFileQueryHandler(IFileRepository fileRepository, IStorageSe
 
             var stream = await storageService.GetAsync(file.StoragePath, cancellationToken);
 
-            return new FileDownloadResponse(stream, file.FileName, file.ContentType, file.Size);
+            return new DownloadFileQueryResult(stream, file.FileName, file.ContentType, file.Size);
         }
         catch (ConcurrencyException)
         {
