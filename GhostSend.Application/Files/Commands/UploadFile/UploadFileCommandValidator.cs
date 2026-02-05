@@ -1,11 +1,15 @@
 using FluentValidation;
+using GhostSend.Application.Common.Settings;
+using Microsoft.Extensions.Options;
 
 namespace GhostSend.Application.Files.Commands.UploadFile;
 
 public class UploadFileCommandValidator : AbstractValidator<UploadFileCommand>
 {
-    public UploadFileCommandValidator()
+    public UploadFileCommandValidator(IOptions<FileSettings> fileSettings)
     {
+        var settings = fileSettings.Value;
+
         RuleFor(x => x.Stream)
             .NotNull()
             .WithMessage("The file is required.");
@@ -23,8 +27,8 @@ public class UploadFileCommandValidator : AbstractValidator<UploadFileCommand>
             .WithMessage("The size must be greater than 0.");
 
         RuleFor(x => x.Size)
-            .LessThanOrEqualTo(10L * 1024 * 1024 * 1024)
-            .WithMessage("The size must be less than or equal to 10GB.");
+            .LessThanOrEqualTo(settings.MaxFileSizeInBytes)
+            .WithMessage($"The size must be less than or equal to {settings.MaxFileSizeDescription}.");
 
         RuleFor(x => x.MaxDownloads)
             .GreaterThan(0)

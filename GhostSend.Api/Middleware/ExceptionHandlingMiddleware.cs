@@ -1,8 +1,8 @@
 using System.Net;
 using System.Text.Json;
+using GhostSend.Application.Common.Exceptions;
 using GhostSend.Domain.Errors;
 using GhostSend.Domain.Exceptions;
-using GhostSend.Application.Common.Exceptions;
 using GhostSend.Infrastructure.Persistence;
 
 namespace GhostSend.Api.Middleware;
@@ -49,6 +49,7 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
             ConcurrencyException ex => (HttpStatusCode.Conflict, ex.Message),
             PersistenceException => (HttpStatusCode.InternalServerError, DomainErrors.General.DatabaseError),
             UnauthorizedAccessException => (HttpStatusCode.Unauthorized, DomainErrors.General.UnauthorizedAccess),
+            ApplicationLayerException { InnerException: ValidationException valEx } => (HttpStatusCode.BadRequest, valEx.Message),
             _ => (HttpStatusCode.InternalServerError, DomainErrors.General.UnexpectedError)
         };
 
