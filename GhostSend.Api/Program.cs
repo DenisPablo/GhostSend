@@ -90,6 +90,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseCors("DefaultCors");
 app.UseMiddleware<ExceptionHandlingMiddleware>();
+app.UseRateLimiter();
 
 app.UseHttpsRedirection();
 

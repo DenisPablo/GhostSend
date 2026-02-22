@@ -29,6 +29,10 @@ public class UploadFileCommandHandlerTests
                     fileSaved = file;
                 });
 
+        unitOfWorkMock
+            .Setup(x => x.ExecuteInTransactionAsync(It.IsAny<Func<CancellationToken, Task>>(), It.IsAny<CancellationToken>()))
+            .Returns<Func<CancellationToken, Task>, CancellationToken>((action, ct) => action(ct));
+
         var handler = new UploadFileCommandHandler(repositoryMock.Object, storageMock.Object, unitOfWorkMock.Object, timeProvider);
 
         var command = new UploadFileCommand(
@@ -44,6 +48,7 @@ public class UploadFileCommandHandlerTests
             f.Size == command.Stream.Length &&
             f.MaxDownloads == command.MaxDownloads
             ), It.IsAny<CancellationToken>()), Times.Once);
+        unitOfWorkMock.Verify(x => x.ExecuteInTransactionAsync(It.IsAny<Func<CancellationToken, Task>>(), It.IsAny<CancellationToken>()), Times.Once);
         unitOfWorkMock.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
 
         Assert.Equal(fileSaved.Id, result.FileId);
@@ -103,6 +108,7 @@ public class UploadFileCommandHandlerTests
 
         repositoryMock.Verify(x => x.AddAsync(It.IsAny<StoredFile>(), It.IsAny<CancellationToken>()), Times.Never);
 
+        unitOfWorkMock.Verify(x => x.ExecuteInTransactionAsync(It.IsAny<Func<CancellationToken, Task>>(), It.IsAny<CancellationToken>()), Times.Never);
         unitOfWorkMock.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
 
     }
@@ -117,6 +123,10 @@ public class UploadFileCommandHandlerTests
 
         storageMock.Setup(x => x.SaveAsync(It.IsAny<Stream>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync("uploads/test-path-data");
+
+        unitOfWorkMock
+            .Setup(x => x.ExecuteInTransactionAsync(It.IsAny<Func<CancellationToken, Task>>(), It.IsAny<CancellationToken>()))
+            .Returns<Func<CancellationToken, Task>, CancellationToken>((action, ct) => action(ct));
 
         var borderLimitStreamMock = new Mock<Stream>();
 
@@ -142,5 +152,6 @@ public class UploadFileCommandHandlerTests
 
         Assert.NotEqual(result.FileId, Guid.Empty);
         repositoryMock.Verify(x => x.AddAsync(It.Is<StoredFile>(f => f.Size == StoredFile.MaxSize), It.IsAny<CancellationToken>()), Times.Once);
+        unitOfWorkMock.Verify(x => x.ExecuteInTransactionAsync(It.IsAny<Func<CancellationToken, Task>>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 }

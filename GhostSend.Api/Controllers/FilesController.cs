@@ -22,81 +22,53 @@ public class FilesController(IMediator mediator) : ControllerBase
     [EnableRateLimiting("fixed")]
     public async Task<IActionResult> UploadFile([FromForm] UploadFileRequest request, CancellationToken cancellationToken)
     {
-        try
-        {
-            var command = request.ToCommand();
-            var result = await mediator.Send(command, cancellationToken);
+        var command = request.ToCommand();
+        var result = await mediator.Send(command, cancellationToken);
 
-            var response = new UploadFileResponse(result.FileId, result.DeleteToken);
+        var response = new UploadFileResponse(result.FileId, result.DeleteToken);
 
-            return CreatedAtAction(nameof(GetMetadata), response);
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(ex.Message);
-        }
+        return CreatedAtAction(nameof(GetMetadata), response);
     }
 
     [HttpGet("GetFile")]
     [EnableRateLimiting("fixed")]
     public async Task<IActionResult> GetFile([FromQuery] FileDownloadRequest request, CancellationToken cancellationToken)
     {
-        try
-        {
-            var query = new DownloadFileQuery(request.Id);
-            var result = await mediator.Send(query, cancellationToken);
+        var query = new DownloadFileQuery(request.Id);
+        var result = await mediator.Send(query, cancellationToken);
 
-            return File(result.Stream, result.ContentType, result.FileName);
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(ex.Message);
-        }
+        return File(result.Stream, result.ContentType, result.FileName);
     }
 
     [HttpGet("GetMetadata")]
     [EnableRateLimiting("fixed")]
     public async Task<IActionResult> GetMetadata([FromQuery] FileMetadataRequest request, CancellationToken cancellationToken)
     {
-        try
-        {
-            var query = new GetFileMetadataQuery(request.Id);
-            var result = await mediator.Send(query, cancellationToken);
+        var query = new GetFileMetadataQuery(request.Id);
+        var result = await mediator.Send(query, cancellationToken);
 
-            var response = new FileMetadataResponse(
-            result.Id,
-            result.FileName,
-            result.ContentType,
-            result.Size,
-            result.MaxDownloads,
-            result.CurrentDownloads,
-            result.UploadDate,
-            result.ExpirationDate,
-            result.ExpirationDate.HasValue ? (result.ExpirationDate.Value - result.UploadDate).ToString(@"hh\:mm\:ss") : null
-            );
+        var response = new FileMetadataResponse(
+        result.Id,
+        result.FileName,
+        result.ContentType,
+        result.Size,
+        result.MaxDownloads,
+        result.CurrentDownloads,
+        result.UploadDate,
+        result.ExpirationDate,
+        result.ExpirationDate.HasValue ? (result.ExpirationDate.Value - result.UploadDate).ToString(@"hh\:mm\:ss") : null
+        );
 
-            return Ok(response);
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(ex.Message);
-        }
+        return Ok(response);
     }
 
     [HttpDelete("Delete")]
     [EnableRateLimiting("fixed")]
     public async Task<IActionResult> DeleteFile([FromQuery] FileDeleteRequest request, CancellationToken cancellationToken)
     {
-        try
-        {
-            var command = new DeleteFileCommand(request.Id, request.DeleteToken);
-            await mediator.Send(command, cancellationToken);
+        var command = new DeleteFileCommand(request.Id, request.DeleteToken);
+        await mediator.Send(command, cancellationToken);
 
-            return NoContent();
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(ex.Message);
-        }
+        return NoContent();
     }
 }

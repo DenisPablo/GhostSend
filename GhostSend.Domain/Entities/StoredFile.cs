@@ -135,5 +135,34 @@ public class StoredFile
         }
 
         CurrentDownloads++;
+        if (MaxDownloads.HasValue && CurrentDownloads >= MaxDownloads.Value)
+        {
+            IsExpired = true;
+        }
+    }
+
+    public void MarkExpired()
+    {
+        IsExpired = true;
+    }
+
+    public bool IsExpiredAt(DateTime now)
+    {
+        if (IsExpired)
+        {
+            return true;
+        }
+
+        if (ExpirationDate.HasValue && now > ExpirationDate.Value)
+        {
+            return true;
+        }
+
+        if (MaxDownloads.HasValue && CurrentDownloads >= MaxDownloads.Value)
+        {
+            return true;
+        }
+
+        return false;
     }
 }

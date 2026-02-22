@@ -22,9 +22,9 @@ public class UploadFileCommandHandler(IFileRepository fileRepository, IStorageSe
         {
             throw new ValidationException(new Dictionary<string, string[]> { { "File", [DomainErrors.StoredFile.FileRequired] } });
         }
+        string? storagePath = null;
         try
         {
-
             var size = request.Stream.Length;
 
             var storedFile = new StoredFile(
@@ -36,22 +36,46 @@ public class UploadFileCommandHandler(IFileRepository fileRepository, IStorageSe
                                                 request.LifeTime
                                             );
 
-            var storagePath = await storageService.SaveAsync(request.Stream, cancellationToken);
+            storagePath = await storageService.SaveAsync(request.Stream, cancellationToken);
 
             storedFile.SetStoragePath(storagePath);
 
-            await fileRepository.AddAsync(storedFile, cancellationToken);
-
-            await unitOfWork.SaveChangesAsync(cancellationToken);
+            await unitOfWork.ExecuteInTransactionAsync(async ct =>
+            {
+                await fileRepository.AddAsync(storedFile, ct);
+                await unitOfWork.SaveChangesAsync(ct);
+            }, cancellationToken);
 
             return new UploadFileResponse { FileId = storedFile.Id, DeleteToken = storedFile.DeleteToken };
         }
         catch (BaseException)
         {
+            if (!string.IsNullOrWhiteSpace(storagePath))
+            {
+                try
+                {
+                    await storageService.DeleteAsync(storagePath, CancellationToken.None);
+                }
+                catch
+                {
+                    // Best-effort cleanup to avoid orphaned files on failed DB operations.
+                }
+            }
             throw;
         }
         catch (Exception ex)
         {
+            if (!string.IsNullOrWhiteSpace(storagePath))
+            {
+                try
+                {
+                    await storageService.DeleteAsync(storagePath, CancellationToken.None);
+                }
+                catch
+                {
+                    // Best-effort cleanup to avoid orphaned files on failed DB operations.
+                }
+            }
             throw new ApplicationLayerException(ApplicationErrors.Files.UploadError, ex);
         }
     }

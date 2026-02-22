@@ -7,7 +7,7 @@ using MediatR;
 
 namespace GhostSend.Application.Files.Commands.DeleteFile;
 
-public class DeleteTokenCommandHandler(IFileRepository fileRepository, IUnitOfWork unitOfWork, IStorageService storageService) : IRequestHandler<DeleteFileCommand>
+public class DeleteTokenCommandHandler(IFileRepository fileRepository, IUnitOfWork unitOfWork, TimeProvider timeProvider) : IRequestHandler<DeleteFileCommand>
 {
     public async Task Handle(DeleteFileCommand command, CancellationToken cancellationToken)
     {
@@ -15,14 +15,22 @@ public class DeleteTokenCommandHandler(IFileRepository fileRepository, IUnitOfWo
         {
             var file = await fileRepository.GetByIdAsync(command.FileId, cancellationToken) ?? throw new ApplicationLayerException(ApplicationErrors.Files.FileNotFound);
 
+            if (file.IsExpiredAt(timeProvider.GetUtcNow().UtcDateTime))
+            {
+                throw new ValidationException(new Dictionary<string, string[]> { { "File", [DomainErrors.StoredFile.FileExpired] } });
+            }
+
             if (file.DeleteToken != command.DeleteToken)
             {
                 throw new ApplicationLayerException(ApplicationErrors.Files.InvalidDeleteToken);
             }
 
-            await storageService.DeleteAsync(file.StoragePath, cancellationToken);
-            await fileRepository.DeleteAsync(file, cancellationToken);
-            await unitOfWork.SaveChangesAsync(cancellationToken);
+            await unitOfWork.ExecuteInTransactionAsync(async ct =>
+            {
+                file.MarkExpired();
+                await fileRepository.UpdateAsync(file, ct);
+                await unitOfWork.SaveChangesAsync(ct);
+            }, cancellationToken);
         }
         catch (BaseException)
         {
