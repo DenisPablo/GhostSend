@@ -1,3 +1,4 @@
+using FluentValidation;
 using GhostSend.Api.Middleware;
 using GhostSend.Application;
 using GhostSend.Application.Common.Settings;
@@ -53,6 +54,7 @@ builder.Services.AddInfrastructure(builder.Configuration);
 
 // Application DI (MediatR, Validators, Behaviors)
 builder.Services.AddApplication();
+builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
 builder.Services.AddHostedService<FileCleanWorker>();
 

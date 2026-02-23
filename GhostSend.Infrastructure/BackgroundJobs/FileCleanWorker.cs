@@ -49,9 +49,14 @@ public class FileCleanWorker(IServiceScopeFactory serviceScopeFactory, ILogger<F
                 await storageService.DeleteAsync(file.StoragePath, cancellationToken);
                 filesToDeleteCorrectly.Add(file);
             }
-            catch
+            catch (FileNotFoundException)
             {
-                logger.LogError("Error deleting file {File}", file.StoragePath);
+                logger.LogWarning("File not found on disk, but still queued for DB cleanup. Path: {File}", file.StoragePath);
+                filesToDeleteCorrectly.Add(file);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Unexpected error deleting file {File}", file.StoragePath);
             }
         });
 

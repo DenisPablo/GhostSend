@@ -20,10 +20,11 @@
 ### ✨ Características Principales
 
 - 📤 **Subida de archivos**: Sube cualquier tipo de archivo a través de una API REST.
+- 🔐 **Zero-Knowledge (E2EE)**: Los archivos se encriptan al 100% en el frontend usando WebCrypto (AES-GCM). El servidor backend **nunca** puede acceder ni conocer el contenido del archivo original, garantizando aislamiento total.
 - ⏱️ **Expiración automática**: Define un tiempo de vida en días para los archivos.
 - 🔢 **Límite de descargas**: Establece un número máximo de descargas permitidas.
-- 🗑️ **Limpieza automática**: Los archivos expirados se eliminan del sistema.
-- 🔒 **Token de eliminación**: Cada archivo genera un token único para borrado manual.
+- 🗑️ **Limpieza automática**: Los archivos expirados se eliminan del sistema de forma automática.
+- 🔒 **Token de eliminación**: Cada archivo genera un token único para borrado táctico manual.
 - 🏗️ **Arquitectura Limpia**: Código mantenible, testeable y escalable.
 
 ---
@@ -38,10 +39,10 @@ El siguiente diagrama ilustra los principales flujos del sistema:
 
 | Actor                 | Caso de Uso                | Descripción                                                                                                                                             |
 | --------------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Usuario Anónimo**   | Subir Archivo              | Sube un archivo con streaming encriptado. Genera ID + Llave, sube el Blob cifrado y recibe un enlace de compartición.                                   |
-| **Usuario Anónimo**   | Descargar Archivo          | Requiere URL con ID. Desencripta en el navegador usando el Hash (#).                                                                                    |
-| **Usuario Anónimo**   | Borrar Archivo Manualmente | Opción de "Borrar ahora" que invoca el borrado táctico (Crypto-Shredding).                                                                              |
-| **Sistema (Cleaner)** | Limpieza Automática        | Se activa por triggers: tiempo expirado o límite de descargas alcanzado. Elimina el archivo y los metadatos, imposibilitando la desencriptación futura. |
+| **Usuario Anónimo**   | Subir Archivo              | Selecciona un archivo en la web. El navegador encripta el archivo localmente (AES-GCM). El blob cifrado viaja ininteligible al backend. El backend devuelve un enlace de compartición y la clave de desencriptación se añade al fragmento `#` de la URL. |
+| **Usuario Anónimo**   | Descargar Archivo          | Requiere URL con ID. El backend entrega los *bytes* encriptados. El navegador desencripta localmente usando la llave extraída del Hash (`#`) de la URL.                            |
+| **Usuario Anónimo**   | Borrar Archivo Manualmente | Opción de "Borrar ahora" que invoca el borrado físico del archivo cifrado desde el backend usando su token.                                                                             |
+| **Sistema (Cleaner)** | Limpieza Automática        | Se activa por triggers: tiempo de vida expirado o límite de descargas alcanzado. Elimina el archivo físico y los metadatos de la base de datos automáticamente. |
 
 ---
 

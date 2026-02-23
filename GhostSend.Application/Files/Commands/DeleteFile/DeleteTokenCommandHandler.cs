@@ -7,7 +7,7 @@ using MediatR;
 
 namespace GhostSend.Application.Files.Commands.DeleteFile;
 
-public class DeleteTokenCommandHandler(IFileRepository fileRepository, IUnitOfWork unitOfWork, TimeProvider timeProvider) : IRequestHandler<DeleteFileCommand>
+public class DeleteTokenCommandHandler(IFileRepository fileRepository, IStorageService storageService, IUnitOfWork unitOfWork, TimeProvider timeProvider) : IRequestHandler<DeleteFileCommand>
 {
     public async Task Handle(DeleteFileCommand command, CancellationToken cancellationToken)
     {
@@ -25,11 +25,24 @@ public class DeleteTokenCommandHandler(IFileRepository fileRepository, IUnitOfWo
                 throw new ApplicationLayerException(ApplicationErrors.Files.InvalidDeleteToken);
             }
 
+            // Atomics: Delete physically from Storage, THEN execute transaction to remove from DB.
+            var storagePath = file.StoragePath;
+
             await unitOfWork.ExecuteInTransactionAsync(async ct =>
             {
-                file.MarkExpired();
-                await fileRepository.UpdateAsync(file, ct);
+                await fileRepository.DeleteAsync(file, ct);
                 await unitOfWork.SaveChangesAsync(ct);
+
+                try
+
+                {
+                    await storageService.DeleteAsync(storagePath, ct);
+                }
+                catch (Exception ex)
+                {
+                    // Fallback to avoid orphaned row in DB if Physical delete completely failed.
+                    throw new ApplicationLayerException(ApplicationErrors.Files.DeleteError, ex);
+                }
             }, cancellationToken);
         }
         catch (BaseException)

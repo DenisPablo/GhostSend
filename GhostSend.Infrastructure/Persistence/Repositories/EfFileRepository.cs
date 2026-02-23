@@ -80,7 +80,7 @@ public class EfFileRepository(ApplicationDbContext context, TimeProvider timePro
             var StoredFiles = await context.StoredFiles
                 .Where(f =>
                     f.IsExpired ||
-                    (f.ExpirationDate.HasValue && f.ExpirationDate < now) ||
+                    (f.ExpirationDate.HasValue && f.ExpirationDate <= now) ||
                     (f.MaxDownloads.HasValue && f.CurrentDownloads >= f.MaxDownloads.Value))
                 .ToListAsync(cancellationToken);
             return StoredFiles;

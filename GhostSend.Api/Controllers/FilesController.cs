@@ -20,8 +20,26 @@ public class FilesController(IMediator mediator) : ControllerBase
     [Consumes("multipart/form-data")]
     [DisableRequestSizeLimit]
     [EnableRateLimiting("fixed")]
-    public async Task<IActionResult> UploadFile([FromForm] UploadFileRequest request, CancellationToken cancellationToken)
+    public async Task<IActionResult> UploadFile(
+        [FromForm] UploadFileRequest request,
+        CancellationToken cancellationToken,
+        [FromServices] FluentValidation.IValidator<UploadFileRequest> validator)
     {
+
+        var validationResult = await validator.ValidateAsync(request, cancellationToken);
+
+        if (!validationResult.IsValid)
+        {
+            return BadRequest(new
+            {
+                Title = "One or more validation errors occurred.",
+                Status = StatusCodes.Status400BadRequest,
+                Errors = validationResult.Errors
+                    .GroupBy(e => e.PropertyName)
+                    .ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).ToArray())
+            });
+        }
+
         var command = request.ToCommand();
         var result = await mediator.Send(command, cancellationToken);
 

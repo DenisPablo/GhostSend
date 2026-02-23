@@ -22,12 +22,13 @@ public class DownloadFileQueryHandler(IFileRepository fileRepository, IStorageSe
             var file = await fileRepository.GetByIdAsync(request.FileId, cancellationToken) ??
                 throw new NotFoundException("File", request.FileId);
 
+            var stream = await storageService.GetAsync(file.StoragePath, cancellationToken);
+
+            // Increment the counter only after we successfully retrieved the physical file.
             file.Download(timeProvider.GetUtcNow().UtcDateTime);
 
             await fileRepository.UpdateAsync(file, cancellationToken);
             await unitOfWork.SaveChangesAsync(cancellationToken);
-
-            var stream = await storageService.GetAsync(file.StoragePath, cancellationToken);
 
             return new DownloadFileQueryResult(stream, file.FileName, file.ContentType, file.Size);
         }
