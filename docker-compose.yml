@@ -1,16 +1,48 @@
+version: '3.8'
+
 services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ghostsend_backend
+    environment:
+      - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=${DB_NAME};Username=${DB_USER};Password=${DB_PASSWORD}
+      - ASPNETCORE_URLS=http://+:8080
+      - ASPNETCORE_ENVIRONMENT=Production
+      - LocalStorage__BasePath=/app/uploads
+      - FileSettings__MaxFileSizeInBytes=10737418240
+    ports:
+      - "8080:8080"
+    volumes:
+      - ghostsend_uploads:/app/uploads
+    depends_on:
+      - db
+    networks:
+      - ghostsend_net
+      - nginx-network
+    restart: always
+
   db:
     image: postgres:15-alpine
     container_name: ghostsend_db
     environment:
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: supersecretpassword
-      POSTGRES_DB: ghostsend
-    ports:
-      - "5432:5432"
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
+    # Removed ports section to keep DB isolated from the exterior
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - ghostsend_pgdata:/var/lib/postgresql/data
+    networks:
+      - ghostsend_net
     restart: always
 
 volumes:
-  pgdata:
+  ghostsend_pgdata:
+  ghostsend_uploads:
+
+networks:
+  ghostsend_net:
+    name: ghostsend_net
+  nginx-network:
+    external: true
