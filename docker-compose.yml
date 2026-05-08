@@ -3,28 +3,19 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: ghostsend-api
+    container_name: ghostsend_backend
     environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__DefaultConnection=Host=db;Database=${DB_NAME};Username=${DB_USER};Password=${DB_PASSWORD}
-      - FileSettings__UploadPath=/app/uploads
+      - ASPNETCORE_URLS=http://+:8080
+      - ASPNETCORE_ENVIRONMENT=Production
+      - LocalStorage__BasePath=/app/uploads
+      - FileSettings__MaxFileSizeInBytes=10737418240
+    # No mapeamos puertos aquí si usarás el proxy de Coolify, 
+    # pero para tu red local, puedes dejar el puerto 8080.
+    ports:
+      - "8080:8080"
     volumes:
       - ghostsend_uploads:/app/uploads
-    depends_on:
-      - db
-    # No mapeamos puertos aquí, Coolify lo hará por nosotros
-
-  db:
-    image: postgres:15-alpine
-    container_name: ghostsend-db
-    environment:
-      - POSTGRES_USER=${DB_USER}
-      - POSTGRES_PASSWORD=${DB_PASSWORD}
-      - POSTGRES_DB=${DB_NAME}
-    volumes:
-      - ghostsend_db_data:/var/lib/postgresql/data
     restart: always
 
 volumes:
   ghostsend_uploads:
-  ghostsend_db_data:
