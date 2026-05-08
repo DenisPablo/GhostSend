@@ -24,6 +24,6 @@ COPY --from=build /app/publish .
 # Create uploads directory (ensure permissions)
 RUN mkdir -p /app/uploads && chmod 777 /app/uploads
 
-EXPOSE 80
+EXPOSE 8080
 
 ENTRYPOINT ["dotnet", "GhostSend.Api.dll"]

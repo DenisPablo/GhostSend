@@ -8,12 +8,12 @@ services:
     container_name: ghostsend_backend
     environment:
       - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=${DB_NAME};Username=${DB_USER};Password=${DB_PASSWORD}
-      - ASPNETCORE_URLS=http://+:80
+      - ASPNETCORE_URLS=http://+:8080
       - ASPNETCORE_ENVIRONMENT=Production
       - LocalStorage__BasePath=/app/uploads
       - FileSettings__MaxFileSizeInBytes=10737418240
     ports:
-      - "80:80"
+      - "8080:8080"
     volumes:
       - ghostsend_uploads:/app/uploads
     depends_on:
