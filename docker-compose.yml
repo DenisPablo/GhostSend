@@ -1,48 +1,30 @@
-version: '3.8'
-
 services:
   backend:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: ghostsend_backend
+    container_name: ghostsend-api
     environment:
-      - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=${DB_NAME};Username=${DB_USER};Password=${DB_PASSWORD}
-      - ASPNETCORE_URLS=http://+:8080
-      - ASPNETCORE_ENVIRONMENT=Production
-      - LocalStorage__BasePath=/app/uploads
-      - FileSettings__MaxFileSizeInBytes=10737418240
-    ports:
-      - "8080:8080"
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=db;Database=${DB_NAME};Username=${DB_USER};Password=${DB_PASSWORD}
+      - FileSettings__UploadPath=/app/uploads
     volumes:
       - ghostsend_uploads:/app/uploads
     depends_on:
       - db
-    networks:
-      - ghostsend_net
-      - nginx-network
-    restart: always
+    # No mapeamos puertos aquí, Coolify lo hará por nosotros
 
   db:
     image: postgres:15-alpine
-    container_name: ghostsend_db
+    container_name: ghostsend-db
     environment:
       - POSTGRES_USER=${DB_USER}
       - POSTGRES_PASSWORD=${DB_PASSWORD}
       - POSTGRES_DB=${DB_NAME}
-    # Removed ports section to keep DB isolated from the exterior
     volumes:
-      - ghostsend_pgdata:/var/lib/postgresql/data
-    networks:
-      - ghostsend_net
+      - ghostsend_db_data:/var/lib/postgresql/data
     restart: always
 
 volumes:
-  ghostsend_pgdata:
   ghostsend_uploads:
-
-networks:
-  ghostsend_net:
-    name: ghostsend_net
-  nginx-network:
-    external: true
+  ghostsend_db_data:
