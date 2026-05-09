@@ -25,12 +25,10 @@ public class UploadFileCommandHandler(IFileRepository fileRepository, IStorageSe
         string? storagePath = null;
         try
         {
-            var size = request.Stream.Length;
-
             var storedFile = new StoredFile(
                                                 request.FileName,
                                                 request.ContentType,
-                                                size,
+                                                request.Size,
                                                 request.MaxDownloads,
                                                 timeProvider,
                                                 request.LifeTime
