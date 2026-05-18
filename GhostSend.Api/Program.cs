@@ -46,9 +46,19 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("DefaultCors", policy =>
     {
-        if (corsSettings != null && corsSettings.AllowedOrigins.Length > 0)
+        if (corsSettings?.AllowedOrigins != null && corsSettings.AllowedOrigins.Length > 0)
         {
-            policy.WithOrigins(corsSettings.AllowedOrigins)
+            var origins = corsSettings.AllowedOrigins
+                .SelectMany(o => o.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+                .ToArray();
+
+            policy.WithOrigins(origins)
+                  .AllowAnyMethod()
+                  .AllowAnyHeader();
+        }
+        else
+        {
+            policy.AllowAnyOrigin()
                   .AllowAnyMethod()
                   .AllowAnyHeader();
         }
