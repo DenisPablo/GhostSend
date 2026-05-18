@@ -17,6 +17,49 @@ using GhostSend.Domain.Exceptions;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Map flat environment variables to ASP.NET Core configuration paths to support standalone Docker deployments in Dokploy
+var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
+if (!string.IsNullOrEmpty(databaseUrl))
+{
+    builder.Configuration["ConnectionStrings:DefaultConnection"] = databaseUrl;
+}
+
+var maxFileSize = Environment.GetEnvironmentVariable("MAX_FILE_SIZE");
+if (!string.IsNullOrEmpty(maxFileSize))
+{
+    builder.Configuration["FileSettings:MaxFileSizeInBytes"] = maxFileSize;
+}
+
+var minioUrl = Environment.GetEnvironmentVariable("MINIO_SERVICE_URL");
+if (!string.IsNullOrEmpty(minioUrl))
+{
+    builder.Configuration["MinioSettings:ServiceURL"] = minioUrl.Trim(' ', '"'); // Safeguard against double quotes typos
+}
+
+var minioAccess = Environment.GetEnvironmentVariable("MINIO_ACCESS_KEY");
+if (!string.IsNullOrEmpty(minioAccess))
+{
+    builder.Configuration["MinioSettings:AccessKey"] = minioAccess;
+}
+
+var minioSecret = Environment.GetEnvironmentVariable("MINIO_SECRET_KEY");
+if (!string.IsNullOrEmpty(minioSecret))
+{
+    builder.Configuration["MinioSettings:SecretKey"] = minioSecret;
+}
+
+var minioBucket = Environment.GetEnvironmentVariable("MINIO_BUCKET_NAME");
+if (!string.IsNullOrEmpty(minioBucket))
+{
+    builder.Configuration["MinioSettings:BucketName"] = minioBucket;
+}
+
+var corsOrigins = Environment.GetEnvironmentVariable("CORS_ALLOWED_ORIGINS");
+if (!string.IsNullOrEmpty(corsOrigins))
+{
+    builder.Configuration["CorsSettings:AllowedOrigins:0"] = corsOrigins;
+}
+
 // Add services to the container.
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
