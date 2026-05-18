@@ -56,7 +56,7 @@ builder.Services.AddCors(options =>
                   .AllowAnyMethod()
                   .AllowAnyHeader();
         }
-        else
+        else if (builder.Environment.IsDevelopment())
         {
             policy.AllowAnyOrigin()
                   .AllowAnyMethod()
