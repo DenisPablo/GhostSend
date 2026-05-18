@@ -7,15 +7,26 @@ services:
     environment:
       - ASPNETCORE_URLS=http://+:8080
       - ASPNETCORE_ENVIRONMENT=Production
-      - ConnectionStrings__DefaultConnection=Host=host.docker.internal;Port=5432;Database=ghostsend;Username=admin;Password=supersecretpassword
-      - MinioSettings__ServiceURL=http://host.docker.internal:9000
-      - MinioSettings__AccessKey=minioadmin
-      - MinioSettings__SecretKey=minioadmin
-      - MinioSettings__BucketName=ghostsend-files
+      - CorsSettings__AllowedOrigins=${CORS_ALLOWED_ORIGINS}
+      #Todo se lee desde las variables de entorno de Dokploy
+      - ConnectionStrings__DefaultConnection=${DATABASE_URL}
+      - MinioSettings__ServiceURL=${MINIO_SERVICE_URL}
+      - MinioSettings__AccessKey=${MINIO_ACCESS_KEY}
+      - MinioSettings__SecretKey=${MINIO_SECRET_KEY}
+      - MinioSettings__BucketName=${MINIO_BUCKET_NAME}
       - MinioSettings__ForcePathStyle=true
-      - FileSettings__MaxFileSizeInBytes=10737418240
+      - FileSettings__MaxFileSizeInBytes=${MAX_FILE_SIZE}
+    
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    
     ports:
       - "8080:8080"
+    
+    networks:
+      - dokploy-network
     restart: always
+
+networks:
+  dokploy-network:
+    external: true
