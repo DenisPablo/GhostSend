@@ -8,6 +8,12 @@ using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Options;
 using Microsoft.EntityFrameworkCore;
+using Amazon.S3;
+using MediatR;
+using GhostSend.Api.DTOs.Requests;
+using GhostSend.Api.DTOs.Responses;
+using GhostSend.Application.Files.Queries.DownloadFile;
+using GhostSend.Domain.Exceptions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -49,6 +55,24 @@ builder.Services.AddCors(options =>
     });
 });
 
+// Configure Amazon S3 client for MinIO
+builder.Services.AddSingleton<IAmazonS3>(sp =>
+{
+    var minioConfig = builder.Configuration.GetSection("MinioSettings");
+    var serviceUrl = minioConfig["ServiceURL"] ?? "http://localhost:9000";
+    var accessKey = minioConfig["AccessKey"] ?? "minioadmin";
+    var secretKey = minioConfig["SecretKey"] ?? "minioadmin";
+    var forcePathStyle = !bool.TryParse(minioConfig["ForcePathStyle"], out var parsed) || parsed;
+
+    var s3Config = new AmazonS3Config
+    {
+        ServiceURL = serviceUrl,
+        ForcePathStyle = forcePathStyle
+    };
+
+    return new AmazonS3Client(accessKey, secretKey, s3Config);
+});
+
 // Infrastructure DI
 builder.Services.AddInfrastructure(builder.Configuration);
 
@@ -61,10 +85,18 @@ builder.Services.AddHostedService<FileCleanWorker>();
 
 builder.Services.AddRateLimiter(options =>
 {
-
-    options.AddFixedWindowLimiter(policyName: "fixed", options =>
+    // Strict policy for file uploads: each request can be very resource-intensive.
+    options.AddFixedWindowLimiter(policyName: "upload", options =>
     {
-        options.PermitLimit = 10;
+        options.PermitLimit = 3;
+        options.Window = TimeSpan.FromMinutes(1);
+        options.QueueLimit = 0;
+    });
+
+    // More permissive policy for read/metadata/delete operations.
+    options.AddFixedWindowLimiter(policyName: "read", options =>
+    {
+        options.PermitLimit = 20;
         options.Window = TimeSpan.FromMinutes(1);
         options.QueueLimit = 0;
     });
@@ -76,7 +108,7 @@ builder.Services.AddRateLimiter(options =>
             {
                 Title = "Too many requests",
                 Status = StatusCodes.Status429TooManyRequests,
-                Detail = "Queue exceeded. Please try again later.",
+                Detail = "Rate limit exceeded. Please try again later.",
                 Layer = "API"
             },
             cancellationToken);
@@ -106,6 +138,73 @@ app.UseRateLimiter();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// POST /api/upload - Secure upload endpoint (anonymized, streams directly to MinIO)
+app.MapPost("/api/upload", async (
+    HttpRequest httpRequest,
+    IMediator mediator,
+    FluentValidation.IValidator<UploadFileRequest> validator,
+    CancellationToken cancellationToken) =>
+{
+    if (!httpRequest.HasFormContentType)
+    {
+        return Results.BadRequest(new { Detail = "Multipart form-data content required" });
+    }
+
+    var form = await httpRequest.ReadFormAsync(cancellationToken);
+    var file = form.Files.GetFile("File");
+    if (file == null)
+    {
+        return Results.BadRequest(new { Detail = "File is required" });
+    }
+
+    var request = new UploadFileRequest
+    {
+        File = file,
+        MaxDownloads = int.TryParse(form["MaxDownloads"], out var maxD) ? maxD : null,
+        LifeTime = form["LifeTime"]
+    };
+
+    var validationResult = await validator.ValidateAsync(request, cancellationToken);
+    if (!validationResult.IsValid)
+    {
+        return Results.BadRequest(new
+        {
+            Title = "One or more validation errors occurred.",
+            Status = StatusCodes.Status400BadRequest,
+            Errors = validationResult.Errors
+                .GroupBy(e => e.PropertyName)
+                .ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).ToArray())
+        });
+    }
+
+    var command = request.ToCommand();
+    var result = await mediator.Send(command, cancellationToken);
+
+    var response = new UploadFileResponse(result.FileId, result.DeleteToken);
+    return Results.Created($"/api/v1/Files/GetMetadata?Id={result.FileId}", response);
+})
+.RequireRateLimiting("upload");
+
+// GET /api/download/{id} - Secure proxy download endpoint (streams directly from MinIO using Results.Stream)
+app.MapGet("/api/download/{id:guid}", async (Guid id, IMediator mediator, CancellationToken cancellationToken) =>
+{
+    try
+    {
+        var query = new DownloadFileQuery(id);
+        var result = await mediator.Send(query, cancellationToken);
+        return Results.Stream(result.Stream, result.ContentType, result.FileName);
+    }
+    catch (NotFoundException)
+    {
+        return Results.NotFound(new { Detail = "File not found or expired" });
+    }
+    catch (GhostSend.Domain.Exceptions.ValidationException ex)
+    {
+        return Results.BadRequest(new { Detail = ex.Message, Errors = ex.Errors });
+    }
+})
+.RequireRateLimiting("read");
 
 app.Run();
 

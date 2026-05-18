@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
     <ProjectReference Include="..\GhostSend.Application\GhostSend.Application.csproj" />
@@ -6,12 +6,19 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="AWSSDK.S3" Version="4.0.23.3" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.0">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.2" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.0" />
+    <!--
+      NOTE: NU1903 warning for System.Security.Cryptography.Xml is a transitive dependency of Npgsql.
+      This package is NOT used directly by GhostSend code. The advisory (GHSA-37gx-xxp4-5rgx,
+      GHSA-w3x6-4m5h-cxqf) affects the XML signing API which we never call.
+      Track: https://github.com/npgsql/efcore.pg/issues — update Npgsql when a fix is released.
+    -->
   </ItemGroup>
 
   <PropertyGroup>

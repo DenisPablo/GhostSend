@@ -26,8 +26,9 @@ public class UploadFileRequestValidator : AbstractValidator<UploadFileRequest>
         });
 
         RuleFor(x => x.MaxDownloads)
-            .GreaterThan(0).When(x => x.MaxDownloads.HasValue)
-            .WithMessage("Max downloads must be greater than 0.");
+            .GreaterThan(0).WithMessage("Max downloads must be greater than 0.")
+            .LessThanOrEqualTo(10_000).WithMessage("Max downloads cannot exceed 10,000.")
+            .When(x => x.MaxDownloads.HasValue);
 
         RuleFor(x => x.LifeTime)
             .Must(lifeTime => TimeSpan.TryParse(lifeTime, out var ts) && ts > TimeSpan.Zero)

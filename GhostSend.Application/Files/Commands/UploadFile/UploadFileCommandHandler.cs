@@ -34,7 +34,14 @@ public class UploadFileCommandHandler(IFileRepository fileRepository, IStorageSe
                                                 request.LifeTime
                                             );
 
-            storagePath = await storageService.SaveAsync(request.Stream, cancellationToken);
+            var extension = System.IO.Path.GetExtension(request.FileName);
+            if (string.IsNullOrEmpty(extension))
+            {
+                extension = ".dat";
+            }
+            var anonymousFileName = $"{Guid.NewGuid()}{extension}";
+
+            storagePath = await storageService.UploadFileAsync(request.Stream, anonymousFileName, request.ContentType, cancellationToken);
 
             storedFile.SetStoragePath(storagePath);
 

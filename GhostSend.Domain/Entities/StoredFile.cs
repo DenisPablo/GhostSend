@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
+using System.Security.Cryptography;
 using GhostSend.Domain.Errors;
 using GhostSend.Domain.Exceptions;
 using ValidationException = GhostSend.Domain.Exceptions.ValidationException;
@@ -88,9 +89,13 @@ public class StoredFile
         }
 
         Id = Guid.NewGuid();
-        DeleteToken = Guid.NewGuid().ToString("N");
+        // 256-bit cryptographically secure random token (64 hex chars)
+        DeleteToken = RandomNumberGenerator.GetHexString(64, lowercase: true);
         CurrentDownloads = 0;
-        UploadDate = timeProvider.GetUtcNow().UtcDateTime;
+
+        // Capture once to keep UploadDate and ExpirationDate consistent
+        var now = timeProvider.GetUtcNow().UtcDateTime;
+        UploadDate = now;
         FileName = fileName;
         ContentType = contentType;
         Size = size;
@@ -98,7 +103,7 @@ public class StoredFile
 
         if (lifeTime.HasValue)
         {
-            ExpirationDate = timeProvider.GetUtcNow().UtcDateTime.Add(lifeTime.Value);
+            ExpirationDate = now.Add(lifeTime.Value);
         }
 
     }

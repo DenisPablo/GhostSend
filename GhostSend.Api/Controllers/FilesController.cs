@@ -18,8 +18,7 @@ public class FilesController(IMediator mediator) : ControllerBase
 
     [HttpPost("upload")]
     [Consumes("multipart/form-data")]
-    [DisableRequestSizeLimit]
-    [EnableRateLimiting("fixed")]
+    [EnableRateLimiting("upload")]
     public async Task<IActionResult> UploadFile(
         [FromForm] UploadFileRequest request,
         CancellationToken cancellationToken,
@@ -49,7 +48,7 @@ public class FilesController(IMediator mediator) : ControllerBase
     }
 
     [HttpGet("GetFile")]
-    [EnableRateLimiting("fixed")]
+    [EnableRateLimiting("read")]
     public async Task<IActionResult> GetFile([FromQuery] FileDownloadRequest request, CancellationToken cancellationToken)
     {
         var query = new DownloadFileQuery(request.Id);
@@ -59,7 +58,7 @@ public class FilesController(IMediator mediator) : ControllerBase
     }
 
     [HttpGet("GetMetadata")]
-    [EnableRateLimiting("fixed")]
+    [EnableRateLimiting("read")]
     public async Task<IActionResult> GetMetadata([FromQuery] FileMetadataRequest request, CancellationToken cancellationToken)
     {
         var query = new GetFileMetadataQuery(request.Id);
@@ -81,7 +80,7 @@ public class FilesController(IMediator mediator) : ControllerBase
     }
 
     [HttpDelete("Delete")]
-    [EnableRateLimiting("fixed")]
+    [EnableRateLimiting("read")]
     public async Task<IActionResult> DeleteFile([FromQuery] FileDeleteRequest request, CancellationToken cancellationToken)
     {
         var command = new DeleteFileCommand(request.Id, request.DeleteToken);

@@ -7,15 +7,15 @@ services:
     environment:
       - ASPNETCORE_URLS=http://+:8080
       - ASPNETCORE_ENVIRONMENT=Production
-      - LocalStorage__BasePath=/app/uploads
+      - ConnectionStrings__DefaultConnection=Host=host.docker.internal;Port=5432;Database=ghostsend;Username=admin;Password=supersecretpassword
+      - MinioSettings__ServiceURL=http://host.docker.internal:9000
+      - MinioSettings__AccessKey=minioadmin
+      - MinioSettings__SecretKey=minioadmin
+      - MinioSettings__BucketName=ghostsend-files
+      - MinioSettings__ForcePathStyle=true
       - FileSettings__MaxFileSizeInBytes=10737418240
-    # No mapeamos puertos aquí si usarás el proxy de Coolify, 
-    # pero para tu red local, puedes dejar el puerto 8080.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "8080:8080"
-    volumes:
-      - ghostsend_uploads:/app/uploads
     restart: always
-
-volumes:
-  ghostsend_uploads:

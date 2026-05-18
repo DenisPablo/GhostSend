@@ -19,10 +19,19 @@ RUN dotnet publish GhostSend.Api.csproj -c Release -o /app/publish
 # Runtime stage
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
+
+# Create a non-root system user and group for least-privilege execution
+RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
+
 COPY --from=build /app/publish .
 
-# Create uploads directory (ensure permissions)
-RUN mkdir -p /app/uploads && chmod 777 /app/uploads
+# Create uploads directory with restricted permissions (owner read/write/exec only)
+RUN mkdir -p /app/uploads \
+    && chown -R appuser:appgroup /app/uploads \
+    && chmod 750 /app/uploads
+
+# Switch to non-root user
+USER appuser
 
 EXPOSE 8080
 

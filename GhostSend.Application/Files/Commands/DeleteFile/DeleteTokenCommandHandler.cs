@@ -4,6 +4,8 @@ using GhostSend.Domain.Errors;
 using GhostSend.Domain.Exceptions;
 using GhostSend.Domain.Interfaces;
 using MediatR;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace GhostSend.Application.Files.Commands.DeleteFile;
 
@@ -20,7 +22,11 @@ public class DeleteTokenCommandHandler(IFileRepository fileRepository, IStorageS
                 throw new ValidationException(new Dictionary<string, string[]> { { "File", [DomainErrors.StoredFile.FileExpired] } });
             }
 
-            if (file.DeleteToken != command.DeleteToken)
+            // Use constant-time comparison to prevent timing attacks on the delete token.
+            var commandTokenBytes = Encoding.UTF8.GetBytes(command.DeleteToken ?? string.Empty);
+            var storedTokenBytes = Encoding.UTF8.GetBytes(file.DeleteToken);
+
+            if (!CryptographicOperations.FixedTimeEquals(commandTokenBytes, storedTokenBytes))
             {
                 throw new ApplicationLayerException(ApplicationErrors.Files.InvalidDeleteToken);
             }

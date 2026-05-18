@@ -2,9 +2,9 @@ namespace GhostSend.Domain.Interfaces;
 
 public interface IStorageService
 {
-    Task<string> SaveAsync(Stream stream, CancellationToken cancellationToken);
+    Task<string> UploadFileAsync(Stream fileStream, string anonymousFileName, string contentType, CancellationToken cancellationToken = default);
 
-    Task<Stream> GetAsync(string storagePath, CancellationToken cancellationToken);
+    Task<Stream> DownloadFileAsync(string anonymousFileName, CancellationToken cancellationToken = default);
 
-    Task DeleteAsync(string storagePath, CancellationToken cancellationToken);
+    Task DeleteAsync(string anonymousFileName, CancellationToken cancellationToken = default);
 }

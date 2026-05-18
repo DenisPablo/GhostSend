@@ -218,10 +218,12 @@ Expone los endpoints REST y maneja las peticiones HTTP.
 
 #### Endpoints Disponibles
 
-| Método | Endpoint               | Descripción          | Request               | Response           |
-| ------ | ---------------------- | -------------------- | --------------------- | ------------------ |
-| `POST` | `/api/v1/files/upload` | Subir un archivo     | `multipart/form-data` | `{ "id": "guid" }` |
-| `GET`  | `/api/v1/files/{id}`   | Descargar un archivo | -                     | `File stream`      |
+| Método | Endpoint                    | Descripción          | Request               | Response           |
+| ------ | --------------------------- | -------------------- | --------------------- | ------------------ |
+| `POST` | `/api/v1/files/upload`      | Subir un archivo     | `multipart/form-data` | `{ "id": "guid", "deleteToken": "string" }` |
+| `GET`  | `/api/v1/files/GetFile`     | Descargar un archivo | `?Id={id}`            | `File stream`      |
+| `GET`  | `/api/v1/files/GetMetadata` | Ver metadatos        | `?Id={id}`            | `JSON`             |
+| `DELETE`| `/api/v1/files/Delete`      | Borrar un archivo    | `?Id={id}&DeleteToken={token}` | `204 No Content` |
 
 #### DTOs
 
@@ -333,7 +335,7 @@ curl -X POST "http://localhost:5000/api/v1/files/upload" \
 ### Descargar un archivo
 
 ```bash
-curl -X GET "http://localhost:5000/api/v1/files/550e8400-e29b-41d4-a716-446655440000" \
+curl -X GET "http://localhost:5000/api/v1/files/GetFile?Id=550e8400-e29b-41d4-a716-446655440000" \
   --output archivo_descargado.pdf
 ```
 

@@ -17,7 +17,7 @@ public static class DependencyInjection
         services.AddScoped<IFileRepository, EfFileRepository>();
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<ApplicationDbContext>());
 
-        services.AddScoped<IStorageService, LocalStorageService>();
+        services.AddScoped<IStorageService, MinioStorageService>();
 
         services.AddSingleton(TimeProvider.System);
 
