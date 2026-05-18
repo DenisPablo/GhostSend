@@ -18,46 +18,52 @@ using GhostSend.Domain.Exceptions;
 var builder = WebApplication.CreateBuilder(args);
 
 // Map flat environment variables to ASP.NET Core configuration paths to support standalone Docker deployments in Dokploy
-var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
+var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL")?.Trim(' ', '"');
 if (!string.IsNullOrEmpty(databaseUrl))
 {
     builder.Configuration["ConnectionStrings:DefaultConnection"] = databaseUrl;
 }
 
-var maxFileSize = Environment.GetEnvironmentVariable("MAX_FILE_SIZE");
+var maxFileSize = Environment.GetEnvironmentVariable("MAX_FILE_SIZE")?.Trim(' ', '"');
 if (!string.IsNullOrEmpty(maxFileSize))
 {
     builder.Configuration["FileSettings:MaxFileSizeInBytes"] = maxFileSize;
 }
 
-var minioUrl = Environment.GetEnvironmentVariable("MINIO_SERVICE_URL");
+var minioUrl = Environment.GetEnvironmentVariable("MINIO_SERVICE_URL")?.Trim(' ', '"');
 if (!string.IsNullOrEmpty(minioUrl))
 {
-    builder.Configuration["MinioSettings:ServiceURL"] = minioUrl.Trim(' ', '"'); // Safeguard against double quotes typos
+    builder.Configuration["MinioSettings:ServiceURL"] = minioUrl;
 }
 
-var minioAccess = Environment.GetEnvironmentVariable("MINIO_ACCESS_KEY");
+var minioAccess = Environment.GetEnvironmentVariable("MINIO_ACCESS_KEY")?.Trim(' ', '"');
 if (!string.IsNullOrEmpty(minioAccess))
 {
     builder.Configuration["MinioSettings:AccessKey"] = minioAccess;
 }
 
-var minioSecret = Environment.GetEnvironmentVariable("MINIO_SECRET_KEY");
+var minioSecret = Environment.GetEnvironmentVariable("MINIO_SECRET_KEY")?.Trim(' ', '"');
 if (!string.IsNullOrEmpty(minioSecret))
 {
     builder.Configuration["MinioSettings:SecretKey"] = minioSecret;
 }
 
-var minioBucket = Environment.GetEnvironmentVariable("MINIO_BUCKET_NAME");
+var minioBucket = Environment.GetEnvironmentVariable("MINIO_BUCKET_NAME")?.Trim(' ', '"');
 if (!string.IsNullOrEmpty(minioBucket))
 {
     builder.Configuration["MinioSettings:BucketName"] = minioBucket;
 }
 
-var corsOrigins = Environment.GetEnvironmentVariable("CORS_ALLOWED_ORIGINS");
+var corsOrigins = Environment.GetEnvironmentVariable("CORS_ALLOWED_ORIGINS")?.Trim(' ', '"');
 if (!string.IsNullOrEmpty(corsOrigins))
 {
     builder.Configuration["CorsSettings:AllowedOrigins:0"] = corsOrigins;
+}
+
+var allowedHosts = Environment.GetEnvironmentVariable("ALLOWED_HOSTS")?.Trim(' ', '"');
+if (!string.IsNullOrEmpty(allowedHosts))
+{
+    builder.Configuration["AllowedHosts"] = allowedHosts;
 }
 
 // Add services to the container.
@@ -93,6 +99,7 @@ builder.Services.AddCors(options =>
         {
             var origins = corsSettings.AllowedOrigins
                 .SelectMany(o => o.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+                .Select(o => o.Trim(' ', '"')) // Clean double quotes inside individual split items!
                 .ToArray();
 
             policy.WithOrigins(origins)
