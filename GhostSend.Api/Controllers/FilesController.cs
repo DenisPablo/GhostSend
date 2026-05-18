@@ -44,7 +44,7 @@ public class FilesController(IMediator mediator) : ControllerBase
 
         var response = new UploadFileResponse(result.FileId, result.DeleteToken);
 
-        return CreatedAtAction(nameof(GetMetadata), response);
+        return CreatedAtAction(nameof(GetMetadata), new { Id = result.FileId }, response);
     }
 
     [HttpGet("GetFile")]
