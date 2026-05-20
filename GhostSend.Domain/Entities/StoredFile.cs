@@ -30,8 +30,7 @@ public class StoredFile
 
     public const long MaxSize = 10L * 1024 * 1024 * 1024;
 
-    [Timestamp]
-    public byte[]? RawVersion { get; private set; }
+    public uint RawVersion { get; private set; }
 
     // constructor for Entity Framework
     private StoredFile() { }

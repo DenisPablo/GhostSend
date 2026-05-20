@@ -11,7 +11,7 @@ public class UploadFileCommandValidator : AbstractValidator<UploadFileCommand>
         var settings = fileSettings.Value;
 
         RuleFor(x => x.Stream)
-            .NotNull()
+            .Must(s => s != null && s != Stream.Null)
             .WithMessage("The file is required.");
 
         RuleFor(x => x.FileName)

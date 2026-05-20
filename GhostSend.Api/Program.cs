@@ -203,7 +203,6 @@ app.MapControllers();
 app.MapPost("/api/upload", async (
     HttpRequest httpRequest,
     IMediator mediator,
-    FluentValidation.IValidator<UploadFileRequest> validator,
     CancellationToken cancellationToken) =>
 {
     if (!httpRequest.HasFormContentType)
@@ -224,19 +223,6 @@ app.MapPost("/api/upload", async (
         MaxDownloads = int.TryParse(form["MaxDownloads"], out var maxD) ? maxD : null,
         LifeTime = form["LifeTime"]
     };
-
-    var validationResult = await validator.ValidateAsync(request, cancellationToken);
-    if (!validationResult.IsValid)
-    {
-        return Results.BadRequest(new
-        {
-            Title = "One or more validation errors occurred.",
-            Status = StatusCodes.Status400BadRequest,
-            Errors = validationResult.Errors
-                .GroupBy(e => e.PropertyName)
-                .ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).ToArray())
-        });
-    }
 
     var command = request.ToCommand();
     var result = await mediator.Send(command, cancellationToken);

@@ -31,25 +31,14 @@ public class DeleteTokenCommandHandler(IFileRepository fileRepository, IStorageS
                 throw new ApplicationLayerException(ApplicationErrors.Files.InvalidDeleteToken);
             }
 
-            // Atomics: Delete physically from Storage, THEN execute transaction to remove from DB.
             var storagePath = file.StoragePath;
 
-            await unitOfWork.ExecuteInTransactionAsync(async ct =>
-            {
-                await fileRepository.DeleteAsync(file, ct);
-                await unitOfWork.SaveChangesAsync(ct);
+            // Delete physically from Storage (network call outside database transaction)
+            await storageService.DeleteAsync(storagePath, cancellationToken);
 
-                try
-
-                {
-                    await storageService.DeleteAsync(storagePath, ct);
-                }
-                catch (Exception ex)
-                {
-                    // Fallback to avoid orphaned row in DB if Physical delete completely failed.
-                    throw new ApplicationLayerException(ApplicationErrors.Files.DeleteError, ex);
-                }
-            }, cancellationToken);
+            // Delete from Database
+            await fileRepository.DeleteAsync(file, cancellationToken);
+            await unitOfWork.SaveChangesAsync(cancellationToken);
         }
         catch (BaseException)
         {
