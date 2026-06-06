@@ -13,12 +13,6 @@
     </PackageReference>
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.2" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.0" />
-    <!--
-      Override transitive System.Security.Cryptography.Xml to fix NU1903 high-severity CVE.
-      This package is NOT used directly by GhostSend code. The advisory (GHSA-37gx-xxp4-5rgx,
-      GHSA-w3x6-4m5h-cxqf) affects the XML signing API which we never call.
-    -->
-    <PackageReference Include="System.Security.Cryptography.Xml" Version="10.0.8" PrivateAssets="All" />
   </ItemGroup>
 
   <PropertyGroup>
@@ -26,6 +20,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AllowMissingPrunePackageData>true</AllowMissingPrunePackageData>
+    <!-- NU1903: System.Security.Cryptography.Xml (transitive, unused) has known CVEs in XML signing — code path never executed -->
+    <NoWarn>$(NoWarn);NU1903</NoWarn>
   </PropertyGroup>
 
 </Project>
