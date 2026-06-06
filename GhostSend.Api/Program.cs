@@ -129,7 +129,10 @@ builder.Services.AddCors(options =>
 builder.Services.AddSingleton<IAmazonS3>(sp =>
 {
     var minioConfig = builder.Configuration.GetSection("MinioSettings");
-    var serviceUrl = minioConfig["ServiceURL"] ?? "http://localhost:9000";
+    var rawServiceUrl = minioConfig["ServiceURL"] ?? "http://localhost:9000";
+    var serviceUrl = rawServiceUrl.StartsWith("http://") || rawServiceUrl.StartsWith("https://")
+        ? rawServiceUrl
+        : $"http://{rawServiceUrl}";
     var accessKey = minioConfig["AccessKey"] ?? "minioadmin";
     var secretKey = minioConfig["SecretKey"] ?? "minioadmin";
     var forcePathStyle = !bool.TryParse(minioConfig["ForcePathStyle"], out var parsed) || parsed;
