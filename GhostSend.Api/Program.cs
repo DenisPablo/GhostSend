@@ -133,6 +133,11 @@ builder.Services.AddSingleton<IAmazonS3>(sp =>
     var serviceUrl = rawServiceUrl.StartsWith("http://") || rawServiceUrl.StartsWith("https://")
         ? rawServiceUrl
         : $"http://{rawServiceUrl}";
+    // Default to port 9000 for MinIO if no explicit port is specified
+    if (Uri.TryCreate(serviceUrl, UriKind.Absolute, out var uri) && uri.IsDefaultPort)
+    {
+        serviceUrl = $"{uri.Scheme}://{uri.Host}:9000";
+    }
     var accessKey = minioConfig["AccessKey"] ?? "minioadmin";
     var secretKey = minioConfig["SecretKey"] ?? "minioadmin";
     var forcePathStyle = !bool.TryParse(minioConfig["ForcePathStyle"], out var parsed) || parsed;
