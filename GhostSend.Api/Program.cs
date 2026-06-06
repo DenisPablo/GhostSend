@@ -90,7 +90,7 @@ if (fileSettings != null)
     {
         options.MultipartBodyLengthLimit = fileSettings.MaxFileSizeInBytes;
         options.KeyLengthLimit = 256;
-        options.ValueCountLimit = 16;
+        options.ValueCountLimit = 1024;
     });
 
     builder.WebHost.ConfigureKestrel(options =>
