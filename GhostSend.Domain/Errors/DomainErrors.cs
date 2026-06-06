@@ -16,6 +16,9 @@ public static class DomainErrors
         public const string MaxDownloadsReached = "The maximum number of downloads has been reached.";
         public const string FileNotFound = "The requested file was not found.";
         public const string InvalidDeleteToken = "The provided delete token is invalid.";
+        public const string ConcurrentDownload = "The file is being downloaded concurrently. Please try again.";
+        public const string FileNameInvalidCharacters = "The file name contains invalid characters.";
+        public const string ContentTypeNotAllowed = "The content type is not allowed.";
     }
 
 

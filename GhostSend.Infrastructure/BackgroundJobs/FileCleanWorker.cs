@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+using Amazon.S3;
 using GhostSend.Domain.Entities;
 using GhostSend.Domain.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
@@ -40,34 +40,38 @@ public class FileCleanWorker(IServiceScopeFactory serviceScopeFactory, ILogger<F
         var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
 
         var expiredFiles = await fileRepository.GetExpiredFilesAsync(cancellationToken);
-        var filesToDeleteCorrectly = new ConcurrentBag<StoredFile>();
 
-        var task = expiredFiles.Select(async file =>
+        foreach (var file in expiredFiles)
         {
             try
             {
                 await storageService.DeleteAsync(file.StoragePath, cancellationToken);
-                filesToDeleteCorrectly.Add(file);
             }
             catch (FileNotFoundException)
             {
                 logger.LogWarning("File not found on disk, but still queued for DB cleanup. Path: {File}", file.StoragePath);
-                filesToDeleteCorrectly.Add(file);
+            }
+            catch (AmazonS3Exception ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound || ex.ErrorCode == "NoSuchKey")
+            {
+                logger.LogWarning("File not found in S3/MinIO storage, but still queued for DB cleanup. Path: {File}", file.StoragePath);
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Unexpected error deleting file {File}", file.StoragePath);
+                logger.LogError(ex, "Unexpected error deleting file {File}, skipping DB cleanup for this file", file.StoragePath);
+                continue;
             }
-        });
 
-        await Task.WhenAll(task);
-
-        foreach (var file in filesToDeleteCorrectly)
-        {
-            await fileRepository.DeleteAsync(file, cancellationToken);
+            try
+            {
+                await fileRepository.DeleteAsync(file, cancellationToken);
+                await unitOfWork.SaveChangesAsync(cancellationToken);
+                logger.LogInformation("Cleaned up expired file {FileId} ({Path})", file.Id, file.StoragePath);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to remove expired file {FileId} from database", file.Id);
+            }
         }
-
-        await unitOfWork.SaveChangesAsync(cancellationToken);
 
         logger.LogInformation("FileCleanWorker completed");
     }

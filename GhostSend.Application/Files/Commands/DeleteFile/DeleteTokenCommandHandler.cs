@@ -9,7 +9,7 @@ using System.Text;
 
 namespace GhostSend.Application.Files.Commands.DeleteFile;
 
-public class DeleteTokenCommandHandler(IFileRepository fileRepository, IStorageService storageService, IUnitOfWork unitOfWork, TimeProvider timeProvider) : IRequestHandler<DeleteFileCommand>
+public class DeleteTokenCommandHandler(IFileRepository fileRepository, IUnitOfWork unitOfWork, TimeProvider timeProvider) : IRequestHandler<DeleteFileCommand>
 {
     public async Task Handle(DeleteFileCommand command, CancellationToken cancellationToken)
     {
@@ -31,14 +31,13 @@ public class DeleteTokenCommandHandler(IFileRepository fileRepository, IStorageS
                 throw new ApplicationLayerException(ApplicationErrors.Files.InvalidDeleteToken);
             }
 
-            var storagePath = file.StoragePath;
-
-            // Delete physically from Storage (network call outside database transaction)
-            await storageService.DeleteAsync(storagePath, cancellationToken);
-
-            // Delete from Database
-            await fileRepository.DeleteAsync(file, cancellationToken);
-            await unitOfWork.SaveChangesAsync(cancellationToken);
+            // Mark the file as expired to delegate physical and DB deletion to the background Clean Worker
+            await unitOfWork.ExecuteInTransactionAsync(async ct =>
+            {
+                file.MarkExpired();
+                await fileRepository.UpdateAsync(file, ct);
+                await unitOfWork.SaveChangesAsync(ct);
+            }, cancellationToken);
         }
         catch (BaseException)
         {

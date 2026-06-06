@@ -10,4 +10,6 @@ public interface IFileRepository
     Task DeleteAsync(StoredFile file, CancellationToken cancellationToken);
 
     Task<List<StoredFile>> GetExpiredFilesAsync(CancellationToken cancellationToken);
+
+    Task<List<string>> GetAllStoragePathsAsync(CancellationToken cancellationToken);
 }

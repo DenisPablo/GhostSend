@@ -90,4 +90,19 @@ public class EfFileRepository(ApplicationDbContext context, TimeProvider timePro
             throw new PersistenceException(InfrastructureErrors.Persistence.ExpiredFilesRetrieveError, ex);
         }
     }
+
+    public async Task<List<string>> GetAllStoragePathsAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await context.StoredFiles
+                .Select(f => f.StoragePath)
+                .Distinct()
+                .ToListAsync(cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            throw new PersistenceException(InfrastructureErrors.Persistence.FileRetrieveError, ex);
+        }
+    }
 }

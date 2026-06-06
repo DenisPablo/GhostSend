@@ -7,4 +7,6 @@ public interface IStorageService
     Task<Stream> DownloadFileAsync(string anonymousFileName, CancellationToken cancellationToken = default);
 
     Task DeleteAsync(string anonymousFileName, CancellationToken cancellationToken = default);
+
+    Task<List<string>> ListFilesAsync(CancellationToken cancellationToken = default);
 }

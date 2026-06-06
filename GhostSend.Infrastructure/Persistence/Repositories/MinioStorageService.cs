@@ -93,4 +93,32 @@ public class MinioStorageService : IStorageService
 
         await _s3Client.DeleteObjectAsync(deleteRequest, cancellationToken);
     }
+
+    public async Task<List<string>> ListFilesAsync(CancellationToken cancellationToken = default)
+    {
+        await EnsureBucketExistsAsync(cancellationToken);
+
+        var keys = new List<string>();
+        var request = new ListObjectsV2Request
+        {
+            BucketName = _bucketName,
+            MaxKeys = 1000
+        };
+
+        ListObjectsV2Response response;
+        do
+        {
+            response = await _s3Client.ListObjectsV2Async(request, cancellationToken);
+
+            foreach (var obj in response.S3Objects)
+            {
+                keys.Add(obj.Key);
+            }
+
+            request.ContinuationToken = response.NextContinuationToken;
+        }
+        while (response.IsTruncated is true);
+
+        return keys;
+    }
 }

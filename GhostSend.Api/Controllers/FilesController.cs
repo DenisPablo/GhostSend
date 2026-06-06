@@ -64,7 +64,7 @@ public class FilesController(IMediator mediator) : ControllerBase
     }
 
     [HttpDelete("Delete")]
-    [EnableRateLimiting("read")]
+    [EnableRateLimiting("delete")]
     public async Task<IActionResult> DeleteFile([FromQuery] FileDeleteRequest request, CancellationToken cancellationToken)
     {
         var command = new DeleteFileCommand(request.Id, request.DeleteToken);

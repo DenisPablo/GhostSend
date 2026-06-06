@@ -6,4 +6,5 @@ public class FileSettings
 
     public long MaxFileSizeInBytes { get; init; }
     public string MaxFileSizeDescription { get; init; } = string.Empty;
+    public int MaxLifetimeInHours { get; init; } = 168; // 7 days default
 }

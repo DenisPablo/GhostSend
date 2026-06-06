@@ -1,9 +1,3 @@
-//TODO: Test de descargas correcto
-
-//TODO: Test de subidas incorrecto Por Tamaño
-//TODO: Test de descargas incorrecto Por ID
-//TODO: Test de eliminacion incorrecto Por ID
-//TODO: Test de Metadatos incorrecto Por ID
 using System.Net;
 using System.Net.Http.Json;
 using GhostSend.Api.DTOs.Responses;
@@ -18,6 +12,22 @@ public class FilesControllerTests(IntegrationTestWebAppFactory factory) : IClass
 {
     private readonly HttpClient _client = factory.CreateClient();
 
+    private async Task<(Guid FileId, string DeleteToken)> UploadFileAsync(byte[] data, string fileName, int? maxDownloads = null, string? lifeTime = null)
+    {
+        var content = new MultipartFormDataContent();
+        var fileContent = new ByteArrayContent(data);
+        fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("text/plain");
+        content.Add(fileContent, "File", fileName);
+        if (maxDownloads.HasValue)
+            content.Add(new StringContent(maxDownloads.Value.ToString()), "MaxDownloads");
+        if (lifeTime != null)
+            content.Add(new StringContent(lifeTime), "LifeTime");
+
+        var response = await _client.PostAsync("/api/v1/Files/upload", content);
+        response.EnsureSuccessStatusCode();
+        var result = await response.Content.ReadFromJsonAsync<UploadFileResponse>();
+        return (result!.FileId, result.DeleteToken);
+    }
 
     [Fact]
     public async Task UploadFile_And_DeleteFile_And_GetMetadata_Works_Correctly()
@@ -83,6 +93,52 @@ public class FilesControllerTests(IntegrationTestWebAppFactory factory) : IClass
         var uploadFile = await _client.PostAsync("/api/v1/Files/upload", content);
 
         Assert.Equal(HttpStatusCode.BadRequest, uploadFile.StatusCode);
+    }
+
+    [Fact]
+    public async Task DownloadFile_ShouldSucceed_WhenFileIsValid()
+    {
+        var (fileId, _) = await UploadFileAsync(new byte[512], "download_test.txt", 5, "01:00:00");
+
+        var response = await _client.GetAsync($"/api/v1/Files/GetFile?Id={fileId}");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal("text/plain", response.Content.Headers.ContentType?.MediaType);
+        Assert.Equal(512, (await response.Content.ReadAsByteArrayAsync()).Length);
+    }
+
+    [Fact]
+    public async Task GetMetadata_WithNonExistentId_Returns_NotFound()
+    {
+        var response = await _client.GetAsync($"/api/v1/Files/GetMetadata?Id={Guid.NewGuid()}");
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task DownloadFile_WithNonExistentId_Returns_NotFound()
+    {
+        var response = await _client.GetAsync($"/api/v1/Files/GetFile?Id={Guid.NewGuid()}");
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task DeleteFile_WithInvalidToken_Returns_BadRequest()
+    {
+        var (fileId, _) = await UploadFileAsync(new byte[128], "delete_invalid.txt", 5, "01:00:00");
+
+        var response = await _client.DeleteAsync($"/api/v1/Files/Delete?Id={fileId}&DeleteToken=invalidtoken123");
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task DeleteFile_WithNonExistentId_Returns_NotFound()
+    {
+        var response = await _client.DeleteAsync($"/api/v1/Files/Delete?Id={Guid.NewGuid()}&DeleteToken=sometoken");
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 }
 

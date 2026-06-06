@@ -4,6 +4,7 @@ using GhostSend.Application;
 using GhostSend.Application.Common.Settings;
 using GhostSend.Infrastructure;
 using GhostSend.Infrastructure.BackgroundJobs;
+using GhostSend.Domain.Interfaces;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Options;
@@ -14,6 +15,7 @@ using GhostSend.Api.DTOs.Requests;
 using GhostSend.Api.DTOs.Responses;
 using GhostSend.Application.Files.Queries.DownloadFile;
 using GhostSend.Domain.Exceptions;
+using Microsoft.AspNetCore.Http; // For IHeaderDictionary extension
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -60,6 +62,12 @@ if (!string.IsNullOrEmpty(corsOrigins))
     builder.Configuration["CorsSettings:AllowedOrigins:0"] = corsOrigins;
 }
 
+var maxLifeTime = Environment.GetEnvironmentVariable("MAX_LIFETIME_HOURS")?.Trim(' ', '"');
+if (!string.IsNullOrEmpty(maxLifeTime))
+{
+    builder.Configuration["FileSettings:MaxLifetimeInHours"] = maxLifeTime;
+}
+
 var allowedHosts = Environment.GetEnvironmentVariable("ALLOWED_HOSTS")?.Trim(' ', '"');
 if (!string.IsNullOrEmpty(allowedHosts))
 {
@@ -81,6 +89,8 @@ if (fileSettings != null)
     builder.Services.Configure<FormOptions>(options =>
     {
         options.MultipartBodyLengthLimit = fileSettings.MaxFileSizeInBytes;
+        options.KeyLengthLimit = 256;
+        options.ValueCountLimit = 16;
     });
 
     builder.WebHost.ConfigureKestrel(options =>
@@ -142,6 +152,7 @@ builder.Services.AddApplication();
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
 builder.Services.AddHostedService<FileCleanWorker>();
+builder.Services.AddHostedService<StorageReconciliationWorker>();
 
 builder.Services.AddRateLimiter(options =>
 {
@@ -157,6 +168,14 @@ builder.Services.AddRateLimiter(options =>
     options.AddFixedWindowLimiter(policyName: "read", options =>
     {
         options.PermitLimit = 20;
+        options.Window = TimeSpan.FromMinutes(1);
+        options.QueueLimit = 0;
+    });
+
+    // Dedicated policy for delete operations.
+    options.AddFixedWindowLimiter(policyName: "delete", options =>
+    {
+        options.PermitLimit = 5;
         options.Window = TimeSpan.FromMinutes(1);
         options.QueueLimit = 0;
     });
@@ -183,6 +202,18 @@ using (var scope = app.Services.CreateScope())
     db.Database.Migrate();
 }
 
+// Warn if default MinIO credentials are used in production
+if (!app.Environment.IsDevelopment())
+{
+    var minioConfig = app.Configuration.GetSection("MinioSettings");
+    var accessKey = minioConfig["AccessKey"];
+    var secretKey = minioConfig["SecretKey"];
+    if (accessKey == "minioadmin" || secretKey == "minioadmin")
+    {
+        app.Logger.LogWarning("Default MinIO credentials detected in production. Please change them immediately.");
+    }
+}
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -194,6 +225,16 @@ app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseRateLimiter();
 
 // app.UseHttpsRedirection();
+
+// Security headers
+app.Use(async (context, next) =>
+{
+    context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
+    context.Response.Headers.Append("X-Frame-Options", "DENY");
+    context.Response.Headers.Append("Referrer-Policy", "no-referrer");
+    context.Response.Headers.Append("X-Permitted-Cross-Domain-Policies", "none");
+    await next();
+});
 
 app.UseAuthorization();
 

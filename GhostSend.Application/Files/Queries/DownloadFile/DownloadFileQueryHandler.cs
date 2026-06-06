@@ -34,7 +34,14 @@ public class DownloadFileQueryHandler(IFileRepository fileRepository, IStorageSe
         }
         catch (ConcurrencyException)
         {
-            throw new GhostSend.Domain.Exceptions.ValidationException(new Dictionary<string, string[]> { { "File", [DomainErrors.StoredFile.FileExpired] } });
+            // Reload fresh state to determine the real cause
+            var reloaded = await fileRepository.GetByIdAsync(request.FileId, cancellationToken);
+            if (reloaded != null && reloaded.IsExpiredAt(timeProvider.GetUtcNow().UtcDateTime))
+            {
+                throw new GhostSend.Domain.Exceptions.ValidationException(new Dictionary<string, string[]> { { "File", [DomainErrors.StoredFile.FileExpired] } });
+            }
+
+            throw new GhostSend.Domain.Exceptions.ValidationException(new Dictionary<string, string[]> { { "File", [DomainErrors.StoredFile.ConcurrentDownload] } });
         }
         catch (BaseException)
         {
